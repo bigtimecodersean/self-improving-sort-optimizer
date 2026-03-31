@@ -1,0 +1,195 @@
+{
+  "config": {
+    "model": "claude-sonnet-4-20250514",
+    "list_size": 100000,
+    "iterations": 8,
+    "benchmark_repeats": 7,
+    "experiment": "meta-round-01",
+    "started_at": "2026-03-31T16:13:56.785381",
+    "best_ms": 3.677,
+    "best_iter": 4,
+    "finished_at": "2026-03-31T16:14:16.502824",
+    "success_rate": "8/8"
+  },
+  "system_prompt": "You are an expert Python performance engineer. You write sorting functions that are as fast as possible on CPython. You understand that:\n\n1. Pure-Python for-loops over 100K items cost 5-80ms of interpreter overhead alone.\n2. The fastest path is delegating to C-compiled code (numpy, built-in sorted(), array ops).\n3. Algorithmic complexity (O(n) vs O(n log n)) only matters if the constant factor is small.\n4. numpy's np.sort on int32 arrays runs an introsort in C \u2014 extremely fast.\n5. list.sort() / sorted() use Timsort in C \u2014 fast, but list\u2192numpy\u2192list can beat it.\n6. The conversion cost (list \u2192 np.array \u2192 .tolist()) is part of the benchmark.\n\nCRITICAL environment details:\n- numpy 2.x is installed. Do NOT use copy=False in np.array() \u2014 it was removed.\n  Use np.asarray() if you want to avoid copies, or just np.array().\n- Python 3.11 on macOS ARM (Apple Silicon).\n\nYour goal: write the FASTEST sort_list function possible. Every millisecond matters. Never submit code identical or nearly identical to a previous attempt.",
+  "initial_prompt": "Write a Python function called `sort_list` that takes a list of integers and returns a new sorted list. Make it as fast as possible for a list of 100,000 random integers in the range [-1_000_000, 1_000_000].\n\nKey insight: pure-Python loops are ~20x slower than C-compiled equivalents. Prefer numpy, built-in sorted(), or other approaches that stay in compiled code.\n\nRules:\n- Signature MUST be: def sort_list(data: list[int]) -> list[int]\n- You may use any standard library or numpy. No subprocess/os.system/ctypes.\n- Return ONLY the function inside a ```python code block. No explanation.\n",
+  "improve_template": "Here is the scoreboard from all previous iterations:\n\n{scoreboard}\n\nThe current best is {best_ms:.3f} ms from iteration {best_iter}:\n```python\n{best_code}\n```\n\n{error_context}Your most recent attempt (iteration {latest_iter}) {latest_result}:\n```python\n{latest_code}\n```\n\n{analysis}\n\nIMPORTANT: Do NOT repeat any previous approach. Each attempt must be meaningfully different.\n\nWrite a new `sort_list` that is FASTER than {best_ms:.3f} ms.\n\nRules:\n- Signature: def sort_list(data: list[int]) -> list[int]\n- numpy is allowed and encouraged. No subprocess/os.system/ctypes.\n- Do NOT use np.array(..., copy=False) \u2014 it fails on numpy 2.x.\n- Return ONLY the function inside a ```python code block. No explanation.\n",
+  "iterations": [
+    {
+      "iteration": 1,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    arr = np.array(data, dtype=np.int32)\n    arr.sort()\n    return arr.tolist()",
+      "status": "success",
+      "is_new_best": true,
+      "stats": {
+        "median_ms": 4.1133,
+        "mean_ms": 4.0615,
+        "min_ms": 3.7394,
+        "max_ms": 4.276,
+        "stdev_ms": 0.1912,
+        "all_ms": [
+          4.1484,
+          3.7394,
+          4.1133,
+          4.0017,
+          4.276,
+          3.9095,
+          4.2422
+        ]
+      }
+    },
+    {
+      "iteration": 2,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    arr = np.asarray(data, dtype=np.int32)\n    return np.sort(arr).tolist()",
+      "status": "success",
+      "is_new_best": true,
+      "stats": {
+        "median_ms": 4.084,
+        "mean_ms": 4.1255,
+        "min_ms": 3.8017,
+        "max_ms": 4.608,
+        "stdev_ms": 0.2655,
+        "all_ms": [
+          4.084,
+          3.8017,
+          4.2266,
+          3.9317,
+          4.2462,
+          3.98,
+          4.608
+        ]
+      }
+    },
+    {
+      "iteration": 3,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    arr = np.asarray(data, dtype=np.int32)\n    arr.sort()\n    return arr.tolist()",
+      "status": "success",
+      "is_new_best": true,
+      "stats": {
+        "median_ms": 3.8882,
+        "mean_ms": 3.8994,
+        "min_ms": 3.7188,
+        "max_ms": 4.0283,
+        "stdev_ms": 0.1087,
+        "all_ms": [
+          3.7188,
+          3.9737,
+          3.8167,
+          4.0283,
+          3.8773,
+          3.8882,
+          3.9927
+        ]
+      }
+    },
+    {
+      "iteration": 4,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    arr = np.fromiter(data, dtype=np.int32, count=len(data))\n    arr.sort()\n    return arr.tolist()",
+      "status": "success",
+      "is_new_best": true,
+      "stats": {
+        "median_ms": 3.677,
+        "mean_ms": 3.7507,
+        "min_ms": 3.4357,
+        "max_ms": 4.1919,
+        "stdev_ms": 0.2543,
+        "all_ms": [
+          3.593,
+          4.1919,
+          3.677,
+          3.4357,
+          3.8107,
+          3.6012,
+          3.9455
+        ]
+      }
+    },
+    {
+      "iteration": 5,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    # Use view-based sorting with pre-allocated output\n    arr = np.asarray(data, dtype=np.int32)\n    sorted_arr = np.sort(arr, kind='quicksort')\n    return sorted_arr.tolist()",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 3.9285,
+        "mean_ms": 3.9362,
+        "min_ms": 3.7453,
+        "max_ms": 4.105,
+        "stdev_ms": 0.1566,
+        "all_ms": [
+          3.9285,
+          3.7453,
+          4.084,
+          3.8245,
+          4.105,
+          3.7784,
+          4.088
+        ]
+      }
+    },
+    {
+      "iteration": 6,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    # Pre-allocate array with exact size and use in-place sort with mergesort\n    arr = np.empty(len(data), dtype=np.int32)\n    arr[:] = data\n    arr.sort(kind='mergesort')\n    return arr.tolist()",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 8.9444,
+        "mean_ms": 9.3912,
+        "min_ms": 7.4252,
+        "max_ms": 12.607,
+        "stdev_ms": 1.9601,
+        "all_ms": [
+          7.4252,
+          7.528,
+          12.607,
+          8.6148,
+          11.5103,
+          9.1085,
+          8.9444
+        ]
+      }
+    },
+    {
+      "iteration": 7,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    # Use int64 to potentially leverage better SIMD optimization on ARM\n    arr = np.fromiter(data, dtype=np.int64, count=len(data))\n    arr.sort(kind='quicksort')\n    return arr.tolist()",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 4.7444,
+        "mean_ms": 4.8107,
+        "min_ms": 4.6965,
+        "max_ms": 5.0056,
+        "stdev_ms": 0.1234,
+        "all_ms": [
+          4.7425,
+          4.6965,
+          4.9547,
+          4.7444,
+          4.7085,
+          5.0056,
+          4.8226
+        ]
+      }
+    },
+    {
+      "iteration": 8,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    # Try mergesort which might be faster on ARM for this data size\n    arr = np.fromiter(data, dtype=np.int32, count=len(data))\n    arr.sort(kind='mergesort')\n    return arr.tolist()",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 6.799,
+        "mean_ms": 6.7862,
+        "min_ms": 6.6387,
+        "max_ms": 6.8958,
+        "stdev_ms": 0.1003,
+        "all_ms": [
+          6.793,
+          6.8958,
+          6.8854,
+          6.8275,
+          6.799,
+          6.6387,
+          6.6643
+        ]
+      }
+    }
+  ]
+}

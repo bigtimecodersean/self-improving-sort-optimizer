@@ -1,0 +1,179 @@
+{
+  "config": {
+    "model": "claude-sonnet-4-20250514",
+    "list_size": 100000,
+    "iterations": 8,
+    "benchmark_repeats": 7,
+    "experiment": "meta-round-03",
+    "started_at": "2026-03-31T16:16:42.655017",
+    "best_ms": 3.887,
+    "best_iter": 1,
+    "finished_at": "2026-03-31T16:17:07.521435",
+    "success_rate": "7/8"
+  },
+  "system_prompt": "You are an expert Python performance engineer specializing in ultra-fast sorting on CPython. You must write a sort_list(data: list[int]) -> list[int] function optimized for large integer arrays.\n\nKey performance insights:\n- Python's built-in sorted() is highly optimized (~4-8ms for 100K ints) - you need to beat this\n- NumPy operations can be faster but conversion overhead matters\n- Pure Python loops are slow (5-80ms overhead for 100K items)\n- Custom sorting algorithms (quicksort, mergesort) in pure Python are typically much slower than built-ins\n- Consider: numpy.sort(), array.array, memoryview, ctypes, numba.jit if available\n- Avoid: manual quicksort/mergesort implementations, excessive copying, nested Python loops\n\nUnexplored strategies to consider:\n- Hybrid approaches combining built-ins with numpy\n- Memory views and buffer protocol optimizations  \n- Parallel sorting approaches\n- In-place optimizations to reduce memory allocation\n- Radix sort or counting sort for integers\n\nAPI requirement: Function must accept list[int] and return list[int]. Imports are allowed.",
+  "initial_prompt": "Write the fastest possible sort_list(data: list[int]) -> list[int] function for 100,000 random integers.\n\nStart with an approach that can beat Python's built-in sorted() function. Consider numpy operations, but be mindful of conversion overhead.\n\nReturn only the complete function code, no explanation.",
+  "improve_template": "Previous attempt #{latest_iter}: {latest_result}\nCode: {latest_code}\n\nPerformance history: {scoreboard}\nCurrent best: {best_ms} (iteration {best_iter})\n\n{error_context}Analysis: {analysis}\n\nFor your next attempt:\n- If your last result was >20ms worse than the best, try a fundamentally different approach\n- If within 5ms of best, make incremental optimizations\n- If you haven't tried built-in sorted() with optimizations, consider that as baseline\n- Avoid repeating approaches that already failed\n\nWrite an improved sort_list function. Return only the complete code, no explanation.",
+  "iterations": [
+    {
+      "iteration": 1,
+      "code": "import numpy as np\n\ndef sort_list(data: list[int]) -> list[int]:\n    if len(data) < 1000:\n        return sorted(data)\n    \n    # Convert to numpy array and sort in-place\n    arr = np.array(data, dtype=np.int32)\n    arr.sort(kind='quicksort')\n    return arr.tolist()",
+      "status": "success",
+      "is_new_best": true,
+      "stats": {
+        "median_ms": 3.887,
+        "mean_ms": 4.0026,
+        "min_ms": 3.7157,
+        "max_ms": 4.6291,
+        "stdev_ms": 0.3055,
+        "all_ms": [
+          3.887,
+          4.0834,
+          3.8613,
+          4.0475,
+          3.7944,
+          4.6291,
+          3.7157
+        ]
+      }
+    },
+    {
+      "iteration": 2,
+      "code": "import numpy as np\n\ndef sort_list(data: list[int]) -> list[int]:\n    if len(data) < 2000:\n        return sorted(data)\n    \n    # Use int64 for better performance on most systems\n    arr = np.fromiter(data, dtype=np.int64, count=len(data))\n    return np.sort(arr, kind='mergesort').tolist()",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 6.7977,
+        "mean_ms": 6.8284,
+        "min_ms": 6.6597,
+        "max_ms": 7.0685,
+        "stdev_ms": 0.1528,
+        "all_ms": [
+          6.6904,
+          7.0685,
+          7.0009,
+          6.8173,
+          6.7977,
+          6.764,
+          6.6597
+        ]
+      }
+    },
+    {
+      "iteration": 3,
+      "code": "import numpy as np\n\ndef sort_list(data: list[int]) -> list[int]:\n    if len(data) < 1000:\n        return sorted(data)\n    \n    # Use int32 for better cache performance and memory usage\n    arr = np.array(data, dtype=np.int32)\n    arr.sort(kind='quicksort')  # in-place sort\n    return arr.tolist()",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 4.0241,
+        "mean_ms": 4.0382,
+        "min_ms": 3.9577,
+        "max_ms": 4.1675,
+        "stdev_ms": 0.0734,
+        "all_ms": [
+          3.9905,
+          4.0241,
+          4.0699,
+          4.0814,
+          3.9763,
+          4.1675,
+          3.9577
+        ]
+      }
+    },
+    {
+      "iteration": 4,
+      "code": "import numpy as np\n\ndef sort_list(data: list[int]) -> list[int]:\n    if len(data) < 500:\n        return sorted(data)\n    \n    # Use int64 to avoid potential overflow issues with int32\n    arr = np.array(data, dtype=np.int64)\n    arr.sort(kind='heapsort')  # try heapsort instead of quicksort\n    return arr.tolist()",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 5.241,
+        "mean_ms": 5.2267,
+        "min_ms": 5.0632,
+        "max_ms": 5.3912,
+        "stdev_ms": 0.1038,
+        "all_ms": [
+          5.241,
+          5.1448,
+          5.3912,
+          5.2871,
+          5.0632,
+          5.2176,
+          5.2418
+        ]
+      }
+    },
+    {
+      "iteration": 5,
+      "code": "import numpy as np\n\ndef sort_list(data: list[int]) -> list[int]:\n    if len(data) < 1000:\n        return sorted(data)\n    \n    # Use int32 for better cache performance if values fit\n    min_val, max_val = min(data), max(data)\n    if -2147483648 <= min_val and max_val <= 2147483647:\n        arr = np.array(data, dtype=np.int32)\n    else:\n        arr = np.array(data, dtype=np.int64)\n    \n    arr.sort(kind='quicksort')\n    return arr.tolist()",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 5.9591,
+        "mean_ms": 6.0045,
+        "min_ms": 5.8736,
+        "max_ms": 6.2151,
+        "stdev_ms": 0.1324,
+        "all_ms": [
+          5.9351,
+          5.8736,
+          6.2151,
+          5.9591,
+          5.9802,
+          5.9031,
+          6.1657
+        ]
+      }
+    },
+    {
+      "iteration": 6,
+      "code": "import numpy as np\n\ndef sort_list(data: list[int]) -> list[int]:\n    if len(data) < 500:\n        return sorted(data)\n    \n    # Check if we can use counting sort for small range\n    min_val = min(data)\n    max_val = max(data)\n    range_size = max_val - min_val + 1\n    \n    if range_size <= len(data) * 2:  # Use counting sort for dense ranges\n        counts = [0] * range_size\n        for val in data:\n            counts[val - min_val] += 1\n        \n        result = []\n        for i, count in enumerate(counts):\n            if count > 0:\n                result.extend([i + min_val] * count)\n        return result\n    \n    # Use numpy for larger sparse ranges\n    if -2147483648 <= min_val and max_val <= 2147483647:\n        arr = np.array(data, dtype=np.int32, copy=False)\n    else:\n        arr = np.array(data, dtype=np.int64, copy=False)\n    \n    np.sort(arr, kind='quicksort')\n    return arr.tolist()",
+      "error": "Unable to avoid copy while creating an array as requested.\nIf using `np.array(obj, copy=False)` replace it with `np.asarray(obj)` to allow a copy when needed (no behavior change in NumPy 1.x).\nFor more details, see https://numpy.org/devdocs/numpy_2_0_migration_guide.html#adapting-to-changes-in-the-copy-keyword.",
+      "status": "benchmark_error"
+    },
+    {
+      "iteration": 7,
+      "code": "import numpy as np\n\ndef sort_list(data: list[int]) -> list[int]:\n    if len(data) < 500:\n        return sorted(data)\n    \n    # Check if we can use counting sort for small range\n    min_val = min(data)\n    max_val = max(data)\n    range_size = max_val - min_val + 1\n    \n    if range_size <= len(data) * 2:  # Use counting sort for dense ranges\n        counts = [0] * range_size\n        for val in data:\n            counts[val - min_val] += 1\n        \n        result = []\n        for i, count in enumerate(counts):\n            if count > 0:\n                result.extend([i + min_val] * count)\n        return result\n    \n    # Use numpy for larger sparse ranges\n    if -2147483648 <= min_val and max_val <= 2147483647:\n        arr = np.asarray(data, dtype=np.int32)\n    else:\n        arr = np.asarray(data, dtype=np.int64)\n    \n    arr.sort(kind='quicksort')\n    return arr.tolist()",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 6.0962,
+        "mean_ms": 6.0203,
+        "min_ms": 5.6617,
+        "max_ms": 6.1925,
+        "stdev_ms": 0.1881,
+        "all_ms": [
+          5.6617,
+          6.0962,
+          6.1434,
+          6.1925,
+          5.927,
+          6.1639,
+          5.9578
+        ]
+      }
+    },
+    {
+      "iteration": 8,
+      "code": "import array\n\ndef sort_list(data: list[int]) -> list[int]:\n    if len(data) < 1000:\n        return sorted(data)\n    \n    # Use array.array for better memory efficiency and potential speed\n    arr = array.array('l', data)\n    \n    # Convert to list, sort in-place, convert back\n    temp_list = arr.tolist()\n    temp_list.sort()\n    return temp_list",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 13.339,
+        "mean_ms": 13.3859,
+        "min_ms": 13.1888,
+        "max_ms": 13.6073,
+        "stdev_ms": 0.1555,
+        "all_ms": [
+          13.2353,
+          13.5368,
+          13.1888,
+          13.3295,
+          13.6073,
+          13.4649,
+          13.339
+        ]
+      }
+    }
+  ]
+}

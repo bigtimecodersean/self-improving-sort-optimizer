@@ -1,0 +1,246 @@
+{
+  "config": {
+    "model": "claude-sonnet-4-20250514",
+    "list_size": 100000,
+    "iterations": 8,
+    "benchmark_repeats": 7,
+    "experiment": "v3-error-feedback",
+    "prompt_version": "v3-error-feedback",
+    "started_at": "2026-03-31T15:56:44.967170",
+    "changes_from_v1": [
+      "System prompt with performance engineering context",
+      "Full scoreboard of all iterations shown to LLM",
+      "Best code always included as reference",
+      "Auto-generated analysis hints (numpy vs pure-python patterns)",
+      "7 benchmark repeats (up from 5)",
+      "Warm-up run before benchmarking",
+      "[v3] Error messages fed back explicitly in prompt",
+      "[v3] numpy 2.x compatibility warning in system prompt",
+      "[v3] Anti-repetition instruction \u2014 must try new approach each iteration",
+      "[v3] Python/numpy/platform version noted in system prompt"
+    ],
+    "best_ms": 3.5422,
+    "best_iter": 2,
+    "finished_at": "2026-03-31T15:57:03.068747"
+  },
+  "iterations": [
+    {
+      "iteration": 1,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    return np.sort(np.array(data, dtype=np.int32)).tolist()",
+      "status": "success",
+      "is_new_best": true,
+      "stats": {
+        "median_ms": 3.9157,
+        "mean_ms": 3.8791,
+        "min_ms": 3.7539,
+        "max_ms": 3.9629,
+        "stdev_ms": 0.0848,
+        "all_ms": [
+          3.8837,
+          3.7666,
+          3.7539,
+          3.9418,
+          3.9157,
+          3.9629,
+          3.929
+        ]
+      }
+    },
+    {
+      "iteration": 2,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    arr = np.fromiter(data, dtype=np.int32, count=len(data))\n    arr.sort()\n    return arr.tolist()",
+      "status": "success",
+      "is_new_best": true,
+      "stats": {
+        "median_ms": 3.5422,
+        "mean_ms": 3.5528,
+        "min_ms": 3.374,
+        "max_ms": 3.7428,
+        "stdev_ms": 0.1394,
+        "all_ms": [
+          3.4775,
+          3.6205,
+          3.5422,
+          3.7428,
+          3.374,
+          3.6945,
+          3.4181
+        ]
+      }
+    },
+    {
+      "iteration": 3,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    import array\n    arr = array.array('i', data)\n    return sorted(arr)",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 13.3653,
+        "mean_ms": 13.4365,
+        "min_ms": 13.3031,
+        "max_ms": 13.7218,
+        "stdev_ms": 0.1665,
+        "all_ms": [
+          13.3653,
+          13.7218,
+          13.4118,
+          13.309,
+          13.3264,
+          13.3031,
+          13.6183
+        ]
+      }
+    },
+    {
+      "iteration": 4,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    arr = np.array(data, dtype=np.int64)\n    return np.sort(arr, kind='heapsort').tolist()",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 5.5353,
+        "mean_ms": 5.6179,
+        "min_ms": 5.4,
+        "max_ms": 5.8929,
+        "stdev_ms": 0.2081,
+        "all_ms": [
+          5.4387,
+          5.7759,
+          5.8309,
+          5.4521,
+          5.8929,
+          5.4,
+          5.5353
+        ]
+      }
+    },
+    {
+      "iteration": 5,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    import array\n    arr = array.array('l', data)\n    return sorted(arr)",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 13.6184,
+        "mean_ms": 13.7191,
+        "min_ms": 13.2935,
+        "max_ms": 14.1876,
+        "stdev_ms": 0.3203,
+        "all_ms": [
+          13.9743,
+          13.9249,
+          14.1876,
+          13.6184,
+          13.4285,
+          13.2935,
+          13.6062
+        ]
+      }
+    },
+    {
+      "iteration": 6,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    arr = np.array(data, dtype=np.int64)\n    return np.sort(arr, kind='quicksort').tolist()",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 5.4203,
+        "mean_ms": 5.4238,
+        "min_ms": 5.2148,
+        "max_ms": 5.6739,
+        "stdev_ms": 0.1427,
+        "all_ms": [
+          5.3486,
+          5.5109,
+          5.6739,
+          5.4203,
+          5.3722,
+          5.426,
+          5.2148
+        ]
+      }
+    },
+    {
+      "iteration": 7,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    import array\n    arr = array.array('i', data)\n    return sorted(arr)",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 13.8985,
+        "mean_ms": 15.2244,
+        "min_ms": 13.7798,
+        "max_ms": 20.3797,
+        "stdev_ms": 2.5517,
+        "all_ms": [
+          20.3797,
+          16.9548,
+          13.8255,
+          13.8204,
+          13.8985,
+          13.7798,
+          13.9123
+        ]
+      }
+    },
+    {
+      "iteration": 8,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    arr = np.array(data, dtype=np.int32)\n    return np.sort(arr, kind='quicksort').tolist()",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 4.0483,
+        "mean_ms": 4.0373,
+        "min_ms": 3.9355,
+        "max_ms": 4.124,
+        "stdev_ms": 0.0684,
+        "all_ms": [
+          3.9355,
+          4.088,
+          4.0693,
+          4.0483,
+          4.0393,
+          3.9566,
+          4.124
+        ]
+      }
+    }
+  ],
+  "prompts_used": [
+    {
+      "iteration": 1,
+      "system_prompt": "You are an expert Python performance engineer. You write sorting functions that are as fast as possible on CPython. You understand that:\n\n1. Pure-Python for-loops over 100K items cost 5-80ms of interpreter overhead alone.\n2. The fastest path is delegating to C-compiled code (numpy, built-in sorted(), array ops).\n3. Algorithmic complexity (O(n) vs O(n log n)) only matters if the constant factor is small.\n4. numpy's np.sort on int32 arrays runs an introsort in C \u2014 extremely fast.\n5. list.sort() / sorted() use Timsort in C \u2014 fast, but list\u2192numpy\u2192list can beat it.\n6. The conversion cost (list \u2192 np.array \u2192 .tolist()) is part of the benchmark.\n\nCRITICAL environment details:\n- numpy 2.x is installed. Do NOT use copy=False in np.array() \u2014 it was removed.\n  Use np.asarray() if you want to avoid copies, or just np.array().\n- Python 3.11 on macOS ARM (Apple Silicon).\n\nYour goal: write the FASTEST sort_list function possible. Every millisecond matters. Never submit code identical or nearly identical to a previous attempt.",
+      "user_prompt": "Write a Python function called `sort_list` that takes a list of integers and returns a new sorted list. Make it as fast as possible for a list of 100,000 random integers in the range [-1_000_000, 1_000_000].\n\nKey insight: pure-Python loops are ~20x slower than C-compiled equivalents. Prefer numpy, built-in sorted(), or other approaches that stay in compiled code.\n\nRules:\n- Signature MUST be: def sort_list(data: list[int]) -> list[int]\n- You may use any standard library or numpy. No subprocess/os.system/ctypes.\n- Return ONLY the function inside a ```python code block. No explanation.\n"
+    },
+    {
+      "iteration": 2,
+      "system_prompt": "You are an expert Python performance engineer. You write sorting functions that are as fast as possible on CPython. You understand that:\n\n1. Pure-Python for-loops over 100K items cost 5-80ms of interpreter overhead alone.\n2. The fastest path is delegating to C-compiled code (numpy, built-in sorted(), array ops).\n3. Algorithmic complexity (O(n) vs O(n log n)) only matters if the constant factor is small.\n4. numpy's np.sort on int32 arrays runs an introsort in C \u2014 extremely fast.\n5. list.sort() / sorted() use Timsort in C \u2014 fast, but list\u2192numpy\u2192list can beat it.\n6. The conversion cost (list \u2192 np.array \u2192 .tolist()) is part of the benchmark.\n\nCRITICAL environment details:\n- numpy 2.x is installed. Do NOT use copy=False in np.array() \u2014 it was removed.\n  Use np.asarray() if you want to avoid copies, or just np.array().\n- Python 3.11 on macOS ARM (Apple Silicon).\n\nYour goal: write the FASTEST sort_list function possible. Every millisecond matters. Never submit code identical or nearly identical to a previous attempt.",
+      "user_prompt": "Here is the scoreboard from all previous iterations:\n\n  Iter \u2502 Median (ms) \u2502 Strategy\n  \u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  \u2605  1 \u2502      3.916  \u2502 numpy sort\n\nThe current best is 3.916 ms from iteration 1:\n```python\ndef sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    return np.sort(np.array(data, dtype=np.int32)).tolist()\n```\n\nYour most recent attempt (iteration 1) ran in 3.916 ms:\n```python\ndef sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    return np.sort(np.array(data, dtype=np.int32)).tolist()\n```\n\n\n\nIMPORTANT: Do NOT repeat any previous approach. Each attempt must be meaningfully different. If you've tried np.sort, np.fromiter, in-place sort, and quicksort kind \u2014 try something else entirely: different dtypes, different array construction, different sort algorithms, built-in sorted() with keys, memoryview tricks, struct module, array.array, or hybrid approaches.\n\nWrite a new `sort_list` that is FASTER than 3.916 ms. Think about what made the best version fast and what made slow versions slow. Stay in C-compiled territory (numpy, built-ins) \u2014 avoid pure-Python loops over the full data.\n\nRules:\n- Signature: def sort_list(data: list[int]) -> list[int]\n- numpy is allowed and encouraged. No subprocess/os.system/ctypes.\n- Do NOT use np.array(..., copy=False) \u2014 it fails on numpy 2.x.\n- Return ONLY the function inside a ```python code block. No explanation.\n"
+    },
+    {
+      "iteration": 3,
+      "system_prompt": "You are an expert Python performance engineer. You write sorting functions that are as fast as possible on CPython. You understand that:\n\n1. Pure-Python for-loops over 100K items cost 5-80ms of interpreter overhead alone.\n2. The fastest path is delegating to C-compiled code (numpy, built-in sorted(), array ops).\n3. Algorithmic complexity (O(n) vs O(n log n)) only matters if the constant factor is small.\n4. numpy's np.sort on int32 arrays runs an introsort in C \u2014 extremely fast.\n5. list.sort() / sorted() use Timsort in C \u2014 fast, but list\u2192numpy\u2192list can beat it.\n6. The conversion cost (list \u2192 np.array \u2192 .tolist()) is part of the benchmark.\n\nCRITICAL environment details:\n- numpy 2.x is installed. Do NOT use copy=False in np.array() \u2014 it was removed.\n  Use np.asarray() if you want to avoid copies, or just np.array().\n- Python 3.11 on macOS ARM (Apple Silicon).\n\nYour goal: write the FASTEST sort_list function possible. Every millisecond matters. Never submit code identical or nearly identical to a previous attempt.",
+      "user_prompt": "Here is the scoreboard from all previous iterations:\n\n  Iter \u2502 Median (ms) \u2502 Strategy\n  \u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  \u2605  1 \u2502      3.916  \u2502 numpy sort\n  \u2605  2 \u2502      3.542  \u2502 numpy sort\n\nThe current best is 3.542 ms from iteration 2:\n```python\ndef sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    arr = np.fromiter(data, dtype=np.int32, count=len(data))\n    arr.sort()\n    return arr.tolist()\n```\n\nYour most recent attempt (iteration 2) ran in 3.542 ms:\n```python\ndef sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    arr = np.fromiter(data, dtype=np.int32, count=len(data))\n    arr.sort()\n    return arr.tolist()\n```\n\nYou've been stuck \u2014 try something fundamentally different from all previous attempts.\n\nIMPORTANT: Do NOT repeat any previous approach. Each attempt must be meaningfully different. If you've tried np.sort, np.fromiter, in-place sort, and quicksort kind \u2014 try something else entirely: different dtypes, different array construction, different sort algorithms, built-in sorted() with keys, memoryview tricks, struct module, array.array, or hybrid approaches.\n\nWrite a new `sort_list` that is FASTER than 3.542 ms. Think about what made the best version fast and what made slow versions slow. Stay in C-compiled territory (numpy, built-ins) \u2014 avoid pure-Python loops over the full data.\n\nRules:\n- Signature: def sort_list(data: list[int]) -> list[int]\n- numpy is allowed and encouraged. No subprocess/os.system/ctypes.\n- Do NOT use np.array(..., copy=False) \u2014 it fails on numpy 2.x.\n- Return ONLY the function inside a ```python code block. No explanation.\n"
+    },
+    {
+      "iteration": 4,
+      "system_prompt": "You are an expert Python performance engineer. You write sorting functions that are as fast as possible on CPython. You understand that:\n\n1. Pure-Python for-loops over 100K items cost 5-80ms of interpreter overhead alone.\n2. The fastest path is delegating to C-compiled code (numpy, built-in sorted(), array ops).\n3. Algorithmic complexity (O(n) vs O(n log n)) only matters if the constant factor is small.\n4. numpy's np.sort on int32 arrays runs an introsort in C \u2014 extremely fast.\n5. list.sort() / sorted() use Timsort in C \u2014 fast, but list\u2192numpy\u2192list can beat it.\n6. The conversion cost (list \u2192 np.array \u2192 .tolist()) is part of the benchmark.\n\nCRITICAL environment details:\n- numpy 2.x is installed. Do NOT use copy=False in np.array() \u2014 it was removed.\n  Use np.asarray() if you want to avoid copies, or just np.array().\n- Python 3.11 on macOS ARM (Apple Silicon).\n\nYour goal: write the FASTEST sort_list function possible. Every millisecond matters. Never submit code identical or nearly identical to a previous attempt.",
+      "user_prompt": "Here is the scoreboard from all previous iterations:\n\n  Iter \u2502 Median (ms) \u2502 Strategy\n  \u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  \u2605  1 \u2502      3.916  \u2502 numpy sort\n  \u2605  2 \u2502      3.542  \u2502 numpy sort\n     3 \u2502     13.365  \u2502 built-in sorted()\n\nThe current best is 3.542 ms from iteration 2:\n```python\ndef sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    arr = np.fromiter(data, dtype=np.int32, count=len(data))\n    arr.sort()\n    return arr.tolist()\n```\n\nYour most recent attempt (iteration 3) ran in 13.365 ms:\n```python\ndef sort_list(data: list[int]) -> list[int]:\n    import array\n    arr = array.array('i', data)\n    return sorted(arr)\n```\n\nPattern: numpy approaches averaged 3.7 ms vs pure-Python at 13.4 ms. You've been stuck \u2014 try something fundamentally different from all previous attempts.\n\nIMPORTANT: Do NOT repeat any previous approach. Each attempt must be meaningfully different. If you've tried np.sort, np.fromiter, in-place sort, and quicksort kind \u2014 try something else entirely: different dtypes, different array construction, different sort algorithms, built-in sorted() with keys, memoryview tricks, struct module, array.array, or hybrid approaches.\n\nWrite a new `sort_list` that is FASTER than 3.542 ms. Think about what made the best version fast and what made slow versions slow. Stay in C-compiled territory (numpy, built-ins) \u2014 avoid pure-Python loops over the full data.\n\nRules:\n- Signature: def sort_list(data: list[int]) -> list[int]\n- numpy is allowed and encouraged. No subprocess/os.system/ctypes.\n- Do NOT use np.array(..., copy=False) \u2014 it fails on numpy 2.x.\n- Return ONLY the function inside a ```python code block. No explanation.\n"
+    },
+    {
+      "iteration": 5,
+      "system_prompt": "You are an expert Python performance engineer. You write sorting functions that are as fast as possible on CPython. You understand that:\n\n1. Pure-Python for-loops over 100K items cost 5-80ms of interpreter overhead alone.\n2. The fastest path is delegating to C-compiled code (numpy, built-in sorted(), array ops).\n3. Algorithmic complexity (O(n) vs O(n log n)) only matters if the constant factor is small.\n4. numpy's np.sort on int32 arrays runs an introsort in C \u2014 extremely fast.\n5. list.sort() / sorted() use Timsort in C \u2014 fast, but list\u2192numpy\u2192list can beat it.\n6. The conversion cost (list \u2192 np.array \u2192 .tolist()) is part of the benchmark.\n\nCRITICAL environment details:\n- numpy 2.x is installed. Do NOT use copy=False in np.array() \u2014 it was removed.\n  Use np.asarray() if you want to avoid copies, or just np.array().\n- Python 3.11 on macOS ARM (Apple Silicon).\n\nYour goal: write the FASTEST sort_list function possible. Every millisecond matters. Never submit code identical or nearly identical to a previous attempt.",
+      "user_prompt": "Here is the scoreboard from all previous iterations:\n\n  Iter \u2502 Median (ms) \u2502 Strategy\n  \u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  \u2605  1 \u2502      3.916  \u2502 numpy sort\n  \u2605  2 \u2502      3.542  \u2502 numpy sort\n     3 \u2502     13.365  \u2502 built-in sorted()\n     4 \u2502      5.535  \u2502 numpy sort\n\nThe current best is 3.542 ms from iteration 2:\n```python\ndef sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    arr = np.fromiter(data, dtype=np.int32, count=len(data))\n    arr.sort()\n    return arr.tolist()\n```\n\nYour most recent attempt (iteration 4) ran in 5.535 ms:\n```python\ndef sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    arr = np.array(data, dtype=np.int64)\n    return np.sort(arr, kind='heapsort').tolist()\n```\n\nPattern: numpy approaches averaged 4.3 ms vs pure-Python at 13.4 ms. You've been stuck \u2014 try something fundamentally different from all previous attempts.\n\nIMPORTANT: Do NOT repeat any previous approach. Each attempt must be meaningfully different. If you've tried np.sort, np.fromiter, in-place sort, and quicksort kind \u2014 try something else entirely: different dtypes, different array construction, different sort algorithms, built-in sorted() with keys, memoryview tricks, struct module, array.array, or hybrid approaches.\n\nWrite a new `sort_list` that is FASTER than 3.542 ms. Think about what made the best version fast and what made slow versions slow. Stay in C-compiled territory (numpy, built-ins) \u2014 avoid pure-Python loops over the full data.\n\nRules:\n- Signature: def sort_list(data: list[int]) -> list[int]\n- numpy is allowed and encouraged. No subprocess/os.system/ctypes.\n- Do NOT use np.array(..., copy=False) \u2014 it fails on numpy 2.x.\n- Return ONLY the function inside a ```python code block. No explanation.\n"
+    },
+    {
+      "iteration": 6,
+      "system_prompt": "You are an expert Python performance engineer. You write sorting functions that are as fast as possible on CPython. You understand that:\n\n1. Pure-Python for-loops over 100K items cost 5-80ms of interpreter overhead alone.\n2. The fastest path is delegating to C-compiled code (numpy, built-in sorted(), array ops).\n3. Algorithmic complexity (O(n) vs O(n log n)) only matters if the constant factor is small.\n4. numpy's np.sort on int32 arrays runs an introsort in C \u2014 extremely fast.\n5. list.sort() / sorted() use Timsort in C \u2014 fast, but list\u2192numpy\u2192list can beat it.\n6. The conversion cost (list \u2192 np.array \u2192 .tolist()) is part of the benchmark.\n\nCRITICAL environment details:\n- numpy 2.x is installed. Do NOT use copy=False in np.array() \u2014 it was removed.\n  Use np.asarray() if you want to avoid copies, or just np.array().\n- Python 3.11 on macOS ARM (Apple Silicon).\n\nYour goal: write the FASTEST sort_list function possible. Every millisecond matters. Never submit code identical or nearly identical to a previous attempt.",
+      "user_prompt": "Here is the scoreboard from all previous iterations:\n\n  Iter \u2502 Median (ms) \u2502 Strategy\n  \u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  \u2605  1 \u2502      3.916  \u2502 numpy sort\n  \u2605  2 \u2502      3.542  \u2502 numpy sort\n     3 \u2502     13.365  \u2502 built-in sorted()\n     4 \u2502      5.535  \u2502 numpy sort\n     5 \u2502     13.618  \u2502 built-in sorted()\n\nThe current best is 3.542 ms from iteration 2:\n```python\ndef sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    arr = np.fromiter(data, dtype=np.int32, count=len(data))\n    arr.sort()\n    return arr.tolist()\n```\n\nYour most recent attempt (iteration 5) ran in 13.618 ms:\n```python\ndef sort_list(data: list[int]) -> list[int]:\n    import array\n    arr = array.array('l', data)\n    return sorted(arr)\n```\n\nPattern: numpy approaches averaged 4.3 ms vs pure-Python at 13.5 ms. You've been stuck \u2014 try something fundamentally different from all previous attempts.\n\nIMPORTANT: Do NOT repeat any previous approach. Each attempt must be meaningfully different. If you've tried np.sort, np.fromiter, in-place sort, and quicksort kind \u2014 try something else entirely: different dtypes, different array construction, different sort algorithms, built-in sorted() with keys, memoryview tricks, struct module, array.array, or hybrid approaches.\n\nWrite a new `sort_list` that is FASTER than 3.542 ms. Think about what made the best version fast and what made slow versions slow. Stay in C-compiled territory (numpy, built-ins) \u2014 avoid pure-Python loops over the full data.\n\nRules:\n- Signature: def sort_list(data: list[int]) -> list[int]\n- numpy is allowed and encouraged. No subprocess/os.system/ctypes.\n- Do NOT use np.array(..., copy=False) \u2014 it fails on numpy 2.x.\n- Return ONLY the function inside a ```python code block. No explanation.\n"
+    },
+    {
+      "iteration": 7,
+      "system_prompt": "You are an expert Python performance engineer. You write sorting functions that are as fast as possible on CPython. You understand that:\n\n1. Pure-Python for-loops over 100K items cost 5-80ms of interpreter overhead alone.\n2. The fastest path is delegating to C-compiled code (numpy, built-in sorted(), array ops).\n3. Algorithmic complexity (O(n) vs O(n log n)) only matters if the constant factor is small.\n4. numpy's np.sort on int32 arrays runs an introsort in C \u2014 extremely fast.\n5. list.sort() / sorted() use Timsort in C \u2014 fast, but list\u2192numpy\u2192list can beat it.\n6. The conversion cost (list \u2192 np.array \u2192 .tolist()) is part of the benchmark.\n\nCRITICAL environment details:\n- numpy 2.x is installed. Do NOT use copy=False in np.array() \u2014 it was removed.\n  Use np.asarray() if you want to avoid copies, or just np.array().\n- Python 3.11 on macOS ARM (Apple Silicon).\n\nYour goal: write the FASTEST sort_list function possible. Every millisecond matters. Never submit code identical or nearly identical to a previous attempt.",
+      "user_prompt": "Here is the scoreboard from all previous iterations:\n\n  Iter \u2502 Median (ms) \u2502 Strategy\n  \u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  \u2605  1 \u2502      3.916  \u2502 numpy sort\n  \u2605  2 \u2502      3.542  \u2502 numpy sort\n     3 \u2502     13.365  \u2502 built-in sorted()\n     4 \u2502      5.535  \u2502 numpy sort\n     5 \u2502     13.618  \u2502 built-in sorted()\n     6 \u2502      5.420  \u2502 numpy sort\n\nThe current best is 3.542 ms from iteration 2:\n```python\ndef sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    arr = np.fromiter(data, dtype=np.int32, count=len(data))\n    arr.sort()\n    return arr.tolist()\n```\n\nYour most recent attempt (iteration 6) ran in 5.420 ms:\n```python\ndef sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    arr = np.array(data, dtype=np.int64)\n    return np.sort(arr, kind='quicksort').tolist()\n```\n\nPattern: numpy approaches averaged 4.6 ms vs pure-Python at 13.5 ms. You've been stuck \u2014 try something fundamentally different from all previous attempts.\n\nIMPORTANT: Do NOT repeat any previous approach. Each attempt must be meaningfully different. If you've tried np.sort, np.fromiter, in-place sort, and quicksort kind \u2014 try something else entirely: different dtypes, different array construction, different sort algorithms, built-in sorted() with keys, memoryview tricks, struct module, array.array, or hybrid approaches.\n\nWrite a new `sort_list` that is FASTER than 3.542 ms. Think about what made the best version fast and what made slow versions slow. Stay in C-compiled territory (numpy, built-ins) \u2014 avoid pure-Python loops over the full data.\n\nRules:\n- Signature: def sort_list(data: list[int]) -> list[int]\n- numpy is allowed and encouraged. No subprocess/os.system/ctypes.\n- Do NOT use np.array(..., copy=False) \u2014 it fails on numpy 2.x.\n- Return ONLY the function inside a ```python code block. No explanation.\n"
+    },
+    {
+      "iteration": 8,
+      "system_prompt": "You are an expert Python performance engineer. You write sorting functions that are as fast as possible on CPython. You understand that:\n\n1. Pure-Python for-loops over 100K items cost 5-80ms of interpreter overhead alone.\n2. The fastest path is delegating to C-compiled code (numpy, built-in sorted(), array ops).\n3. Algorithmic complexity (O(n) vs O(n log n)) only matters if the constant factor is small.\n4. numpy's np.sort on int32 arrays runs an introsort in C \u2014 extremely fast.\n5. list.sort() / sorted() use Timsort in C \u2014 fast, but list\u2192numpy\u2192list can beat it.\n6. The conversion cost (list \u2192 np.array \u2192 .tolist()) is part of the benchmark.\n\nCRITICAL environment details:\n- numpy 2.x is installed. Do NOT use copy=False in np.array() \u2014 it was removed.\n  Use np.asarray() if you want to avoid copies, or just np.array().\n- Python 3.11 on macOS ARM (Apple Silicon).\n\nYour goal: write the FASTEST sort_list function possible. Every millisecond matters. Never submit code identical or nearly identical to a previous attempt.",
+      "user_prompt": "Here is the scoreboard from all previous iterations:\n\n  Iter \u2502 Median (ms) \u2502 Strategy\n  \u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u253c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n  \u2605  1 \u2502      3.916  \u2502 numpy sort\n  \u2605  2 \u2502      3.542  \u2502 numpy sort\n     3 \u2502     13.365  \u2502 built-in sorted()\n     4 \u2502      5.535  \u2502 numpy sort\n     5 \u2502     13.618  \u2502 built-in sorted()\n     6 \u2502      5.420  \u2502 numpy sort\n     7 \u2502     13.899  \u2502 built-in sorted()\n\nThe current best is 3.542 ms from iteration 2:\n```python\ndef sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    arr = np.fromiter(data, dtype=np.int32, count=len(data))\n    arr.sort()\n    return arr.tolist()\n```\n\nYour most recent attempt (iteration 7) ran in 13.899 ms:\n```python\ndef sort_list(data: list[int]) -> list[int]:\n    import array\n    arr = array.array('i', data)\n    return sorted(arr)\n```\n\nPattern: numpy approaches averaged 4.6 ms vs pure-Python at 13.6 ms. You've been stuck \u2014 try something fundamentally different from all previous attempts.\n\nIMPORTANT: Do NOT repeat any previous approach. Each attempt must be meaningfully different. If you've tried np.sort, np.fromiter, in-place sort, and quicksort kind \u2014 try something else entirely: different dtypes, different array construction, different sort algorithms, built-in sorted() with keys, memoryview tricks, struct module, array.array, or hybrid approaches.\n\nWrite a new `sort_list` that is FASTER than 3.542 ms. Think about what made the best version fast and what made slow versions slow. Stay in C-compiled territory (numpy, built-ins) \u2014 avoid pure-Python loops over the full data.\n\nRules:\n- Signature: def sort_list(data: list[int]) -> list[int]\n- numpy is allowed and encouraged. No subprocess/os.system/ctypes.\n- Do NOT use np.array(..., copy=False) \u2014 it fails on numpy 2.x.\n- Return ONLY the function inside a ```python code block. No explanation.\n"
+    }
+  ]
+}

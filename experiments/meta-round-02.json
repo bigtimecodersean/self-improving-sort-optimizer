@@ -1,0 +1,195 @@
+{
+  "config": {
+    "model": "claude-sonnet-4-20250514",
+    "list_size": 100000,
+    "iterations": 8,
+    "benchmark_repeats": 7,
+    "experiment": "meta-round-02",
+    "started_at": "2026-03-31T16:14:35.157208",
+    "best_ms": 11.4572,
+    "best_iter": 8,
+    "finished_at": "2026-03-31T16:16:25.016074",
+    "success_rate": "8/8"
+  },
+  "system_prompt": "You are an expert Python performance engineer specializing in ultra-fast sorting on CPython. You must write a sort_list(data: list[int]) -> list[int] function optimized for 100K integers.\n\nKey performance insights:\n- Pure Python loops over 100K items cost 5-80ms of interpreter overhead\n- Numpy conversion overhead can be 2-5ms, only use if algorithm saves >5ms\n- Buffer protocol and memoryview can avoid copies\n- Consider: radix sort, counting sort for integers, parallel approaches\n- Sometimes pure Python with optimized algorithms beats numpy\n- Avoid repeated similar approaches - if numpy isn't working well, try completely different strategies\n\nPrioritize:\n1. Algorithmic improvements (O(n) sorts for integers)\n2. Memory access patterns and cache efficiency  \n3. Minimizing Python interpreter overhead\n4. Buffer protocol tricks and zero-copy operations\n\nBe willing to abandon approaches that aren't working and try fundamentally different strategies.",
+  "initial_prompt": "Write the fastest possible sort_list(data: list[int]) -> list[int] function for sorting 100,000 random integers in CPython.\n\nConsider these high-performance strategies:\n- Radix sort or counting sort (O(n) for integers)\n- Buffer protocol with memoryview for zero-copy operations\n- Numpy only if the conversion overhead (<3ms) is worth it\n- Pure Python with algorithmic improvements\n- Parallel sorting approaches\n\nReturn only the function code, no explanations.",
+  "improve_template": "Previous attempts:\n{scoreboard}\n\nBest so far: {best_ms}ms (iteration {best_iter})\n{best_code}\n\nLatest attempt: {latest_result}ms\n{latest_code}\n\n{error_context}\n\nAnalysis: {analysis}\n\nIMPORTANT: If you've tried multiple numpy variations without major improvements, switch to a fundamentally different approach:\n- Try radix sort or counting sort (O(n) for integers in limited range)\n- Use buffer protocol with array.array for zero-copy operations  \n- Try pure Python with Timsort optimizations\n- Consider parallel approaches with threading\n- Experiment with memory views and ctypes\n\nWrite a faster sort_list function using a DIFFERENT core strategy than your recent attempts:",
+  "iterations": [
+    {
+      "iteration": 1,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    if len(data) <= 1:\n        return data[:]\n    \n    # Find min/max to determine range\n    min_val = min(data)\n    max_val = max(data)\n    range_size = max_val - min_val + 1\n    \n    # Use counting sort for small ranges\n    if range_size <= len(data) * 2:\n        counts = [0] * range_size\n        for num in data:\n            counts[num - min_val] += 1\n        \n        result = []\n        for i, count in enumerate(counts):\n            if count:\n                result.extend([i + min_val] * count)\n        return result\n    \n    # Radix sort for larger ranges\n    def radix_sort(arr):\n        if not arr:\n            return arr\n        \n        # Handle negative numbers by offsetting\n        offset = min(arr) if min(arr) < 0 else 0\n        max_val = max(arr) - offset\n        \n        # Find number of digits\n        digits = 0\n        temp = max_val\n        while temp:\n            digits += 1\n            temp //= 10\n        if digits == 0:\n            digits = 1\n        \n        # Radix sort\n        result = arr[:]\n        for digit in range(digits):\n            buckets = [[] for _ in range(10)]\n            for num in result:\n                d = ((num - offset) // (10 ** digit)) % 10\n                buckets[d].append(num)\n            \n            result = []\n            for bucket in buckets:\n                result.extend(bucket)\n        \n        return result\n    \n    return radix_sort(data)",
+      "status": "success",
+      "is_new_best": true,
+      "stats": {
+        "median_ms": 51.0815,
+        "mean_ms": 51.1734,
+        "min_ms": 50.7108,
+        "max_ms": 51.7453,
+        "stdev_ms": 0.3983,
+        "all_ms": [
+          51.2881,
+          50.7108,
+          51.0815,
+          50.8341,
+          51.6324,
+          51.7453,
+          50.9217
+        ]
+      }
+    },
+    {
+      "iteration": 2,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    if len(data) <= 1:\n        return data[:]\n    \n    n = len(data)\n    \n    # Single pass to find min/max\n    min_val = max_val = data[0]\n    for i in range(1, n):\n        val = data[i]\n        if val < min_val:\n            min_val = val\n        elif val > max_val:\n            max_val = val\n    \n    range_size = max_val - min_val + 1\n    \n    # Use counting sort for reasonable ranges\n    if range_size <= n * 4:\n        # Use array.array for better memory efficiency\n        from array import array\n        counts = array('i', [0] * range_size)\n        \n        # Count occurrences\n        for val in data:\n            counts[val - min_val] += 1\n        \n        # Reconstruct result directly\n        result = []\n        result_extend = result.extend\n        for i in range(range_size):\n            count = counts[i]\n            if count:\n                result_extend([i + min_val] * count)\n        return result\n    \n    # For very large ranges, use optimized radix sort with array.array\n    from array import array\n    \n    # Use signed int array for better performance\n    arr = array('i', data)\n    \n    # Handle negatives by finding offset\n    if min_val < 0:\n        # Offset all values to make them positive\n        offset = -min_val\n        for i in range(n):\n            arr[i] += offset\n        max_val += offset\n    else:\n        offset = 0\n    \n    # Determine number of digits in base 256 for better cache performance\n    max_val_adj = max_val if offset == 0 else max_val\n    if max_val_adj < 256:\n        base = 256\n        digits = 1\n    elif max_val_adj < 65536:\n        base = 256  \n        digits = 2\n    else:\n        base = 256\n        digits = 4\n    \n    # Radix sort with base 256\n    temp = array('i', [0] * n)\n    \n    for digit in range(digits):\n        # Counting sort for current digit\n        counts = [0] * base\n        shift = digit * 8  # 8 bits per byte\n        \n        # Count\n        for i in range(n):\n            digit_val = (arr[i] >> shift) & 255\n            counts[digit_val] += 1\n        \n        # Cumulative counts\n        for i in range(1, base):\n            counts[i] += counts[i-1]\n        \n        # Build output\n        for i in range(n-1, -1, -1):\n            digit_val = (arr[i] >> shift) & 255\n            counts[digit_val] -= 1\n            temp[counts[digit_val]] = arr[i]\n        \n        # Swap arrays\n        arr, temp = temp, arr\n    \n    # Convert back and handle offset\n    if offset:\n        return [arr[i] - offset for i in range(n)]\n    else:\n        return list(arr)",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 87.6279,
+        "mean_ms": 87.7286,
+        "min_ms": 85.3302,
+        "max_ms": 89.6697,
+        "stdev_ms": 1.5558,
+        "all_ms": [
+          89.6697,
+          88.491,
+          89.3624,
+          86.9719,
+          87.6279,
+          86.6468,
+          85.3302
+        ]
+      }
+    },
+    {
+      "iteration": 3,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    n = len(data)\n    if n <= 1:\n        return data[:]\n    \n    # Use memoryview for zero-copy access\n    from array import array\n    \n    # Convert to array for better memory access patterns\n    arr = array('i', data)\n    arr_view = memoryview(arr)\n    \n    # Single pass min/max with optimized loop\n    min_val = max_val = arr[0]\n    for i in range(1, n):\n        val = arr[i]\n        if val < min_val:\n            min_val = val\n        if val > max_val:\n            max_val = val\n    \n    range_size = max_val - min_val + 1\n    \n    # Optimized counting sort for small ranges\n    if range_size <= n * 2:\n        # Use bytearray for small counts, array for large\n        if range_size <= 65536:\n            counts = bytearray(range_size)\n            # Count with direct memory access\n            for i in range(n):\n                counts[arr[i] - min_val] += 1\n            \n            # Reconstruct with minimal allocations\n            result = [0] * n\n            idx = 0\n            for i in range(range_size):\n                count = counts[i]\n                if count:\n                    val = i + min_val\n                    for _ in range(count):\n                        result[idx] = val\n                        idx += 1\n            return result\n        else:\n            counts = array('i', [0] * range_size)\n            for i in range(n):\n                counts[arr[i] - min_val] += 1\n            \n            result = [0] * n\n            idx = 0\n            for i in range(range_size):\n                count = counts[i]\n                if count:\n                    val = i + min_val\n                    for _ in range(count):\n                        result[idx] = val\n                        idx += 1\n            return result\n    \n    # For large ranges, use in-place quicksort with 3-way partitioning\n    # This avoids memory allocation overhead of radix sort\n    def quicksort_3way(arr, lo, hi):\n        if hi <= lo:\n            return\n        \n        # Use median-of-3 pivot selection\n        mid = lo + (hi - lo) // 2\n        if arr[mid] < arr[lo]:\n            arr[lo], arr[mid] = arr[mid], arr[lo]\n        if arr[hi] < arr[lo]:\n            arr[lo], arr[hi] = arr[hi], arr[lo]\n        if arr[hi] < arr[mid]:\n            arr[mid], arr[hi] = arr[hi], arr[mid]\n        \n        pivot = arr[mid]\n        arr[mid], arr[hi] = arr[hi], arr[mid]\n        \n        # 3-way partitioning\n        lt = lo\n        gt = hi\n        i = lo\n        \n        while i <= gt:\n            if arr[i] < pivot:\n                arr[lt], arr[i] = arr[i], arr[lt]\n                lt += 1\n                i += 1\n            elif arr[i] > pivot:\n                arr[gt], arr[i] = arr[i], arr[gt]\n                gt -= 1\n            else:\n                i += 1\n        \n        # Recursively sort partitions\n        quicksort_3way(arr, lo, lt - 1)\n        quicksort_3way(arr, gt + 1, hi)\n    \n    # Create working copy\n    result_arr = array('i', arr)\n    quicksort_3way(result_arr, 0, n - 1)\n    \n    return list(result_arr)",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 241.4192,
+        "mean_ms": 241.1974,
+        "min_ms": 239.8607,
+        "max_ms": 241.848,
+        "stdev_ms": 0.7078,
+        "all_ms": [
+          241.6287,
+          241.2238,
+          241.848,
+          241.7295,
+          240.6715,
+          241.4192,
+          239.8607
+        ]
+      }
+    },
+    {
+      "iteration": 4,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    n = len(data)\n    if n <= 1:\n        return data[:]\n    \n    # Single-pass min/max finding\n    min_val = max_val = data[0]\n    for i in range(1, n):\n        val = data[i]\n        if val < min_val:\n            min_val = val\n        elif val > max_val:\n            max_val = val\n    \n    range_size = max_val - min_val + 1\n    \n    # Always use counting sort for integers - it's O(n+k)\n    # Optimize for different range sizes\n    if range_size <= 256:\n        # Use bytearray for small ranges (1 byte per count)\n        counts = bytearray(range_size)\n        \n        # Fast counting loop\n        for val in data:\n            counts[val - min_val] += 1\n        \n        # Reconstruct result with pre-allocated list\n        result = []\n        for i in range(range_size):\n            count = counts[i]\n            if count:\n                result.extend([i + min_val] * count)\n        \n        return result\n    \n    elif range_size <= n * 4:  # Reasonable density threshold\n        # Use list for medium ranges\n        counts = [0] * range_size\n        \n        # Count occurrences\n        for val in data:\n            counts[val - min_val] += 1\n        \n        # Rebuild with extend for efficiency\n        result = []\n        for i in range(range_size):\n            count = counts[i]\n            if count:\n                result.extend([i + min_val] * count)\n        \n        return result\n    \n    else:\n        # For very sparse data, fall back to Python's Timsort\n        # which is highly optimized in CPython\n        return sorted(data)",
+      "status": "success",
+      "is_new_best": true,
+      "stats": {
+        "median_ms": 12.5525,
+        "mean_ms": 12.5421,
+        "min_ms": 12.2873,
+        "max_ms": 12.8579,
+        "stdev_ms": 0.199,
+        "all_ms": [
+          12.5991,
+          12.7057,
+          12.2873,
+          12.5525,
+          12.3825,
+          12.8579,
+          12.4101
+        ]
+      }
+    },
+    {
+      "iteration": 5,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    n = len(data)\n    if n <= 1:\n        return data[:]\n    \n    # Handle negative numbers by finding offset\n    min_val = min(data)\n    if min_val < 0:\n        # Shift all values to be non-negative\n        shifted_data = [x - min_val for x in data]\n        max_val = max(shifted_data)\n    else:\n        shifted_data = data\n        max_val = max(data)\n        min_val = 0\n    \n    # Use array.array for better memory layout and performance\n    import array\n    \n    # Convert to array for faster access\n    arr = array.array('i', shifted_data)\n    \n    # Radix sort - process digit by digit\n    exp = 1\n    while max_val // exp > 0:\n        # Counting sort for current digit\n        count = [0] * 10\n        \n        # Count occurrences of each digit\n        for i in range(n):\n            digit = (arr[i] // exp) % 10\n            count[digit] += 1\n        \n        # Convert counts to positions\n        for i in range(1, 10):\n            count[i] += count[i - 1]\n        \n        # Build output array\n        output = array.array('i', [0] * n)\n        for i in range(n - 1, -1, -1):\n            digit = (arr[i] // exp) % 10\n            count[digit] -= 1\n            output[count[digit]] = arr[i]\n        \n        # Copy back to original array\n        arr = output\n        exp *= 10\n    \n    # Convert back to list and restore original values\n    if min_val < 0:\n        return [x + min_val for x in arr]\n    else:\n        return list(arr)",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 135.4499,
+        "mean_ms": 145.5285,
+        "min_ms": 133.1265,
+        "max_ms": 192.4326,
+        "stdev_ms": 21.9843,
+        "all_ms": [
+          133.1265,
+          133.9519,
+          133.1958,
+          135.4499,
+          192.4326,
+          154.1663,
+          136.3762
+        ]
+      }
+    },
+    {
+      "iteration": 6,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    n = len(data)\n    if n <= 1:\n        return data[:]\n    \n    # Use array.array for efficient memory layout\n    import array\n    \n    # Convert to array once - this is the only conversion overhead\n    arr = array.array('i', data)\n    \n    # Get memoryview for zero-copy operations\n    mv = memoryview(arr)\n    \n    # Use a hybrid approach: counting sort for dense data, \n    # quicksort-like partitioning for sparse data\n    \n    # Quick range check with single pass\n    min_val = max_val = arr[0]\n    for i in range(1, n):\n        val = arr[i]\n        if val < min_val:\n            min_val = val\n        elif val > max_val:\n            max_val = val\n    \n    range_size = max_val - min_val + 1\n    \n    if range_size <= n * 2:  # Dense data - use counting sort\n        # Use bytearray for counts to minimize memory\n        if range_size <= 255:\n            counts = bytearray(range_size)\n            # Direct memory access through buffer\n            for i in range(n):\n                counts[arr[i] - min_val] += 1\n        else:\n            counts = array.array('i', [0] * range_size)\n            for i in range(n):\n                counts[arr[i] - min_val] += 1\n        \n        # Reconstruct directly into result array\n        result = array.array('i')\n        for i in range(range_size):\n            count = counts[i]\n            if count:\n                # Extend with repeated values\n                result.extend([i + min_val] * count)\n        \n        return result.tolist()\n    \n    else:  # Sparse data - use in-place quicksort on array\n        def quicksort_inplace(arr, low, high):\n            if low < high:\n                # Simple partition - avoid complex pivot selection overhead\n                pivot_idx = partition(arr, low, high)\n                quicksort_inplace(arr, low, pivot_idx - 1)\n                quicksort_inplace(arr, pivot_idx + 1, high)\n        \n        def partition(arr, low, high):\n            pivot = arr[high]\n            i = low - 1\n            for j in range(low, high):\n                if arr[j] <= pivot:\n                    i += 1\n                    arr[i], arr[j] = arr[j], arr[i]\n            arr[i + 1], arr[high] = arr[high], arr[i + 1]\n            return i + 1\n        \n        # Sort in-place on the array\n        quicksort_inplace(arr, 0, n - 1)\n        return arr.tolist()",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 164.4953,
+        "mean_ms": 164.9872,
+        "min_ms": 163.9806,
+        "max_ms": 166.3095,
+        "stdev_ms": 0.952,
+        "all_ms": [
+          165.3787,
+          164.4953,
+          166.139,
+          164.2043,
+          164.4027,
+          163.9806,
+          166.3095
+        ]
+      }
+    },
+    {
+      "iteration": 7,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    n = len(data)\n    if n <= 1:\n        return data[:]\n    \n    # Single-pass min/max finding with local variables for speed\n    min_val = max_val = data[0]\n    for val in data:\n        if val < min_val:\n            min_val = val\n        elif val > max_val:\n            max_val = val\n    \n    range_size = max_val - min_val + 1\n    \n    # For very sparse data, use Python's highly optimized Timsort\n    if range_size > n * 8:\n        return sorted(data)\n    \n    # Optimized counting sort with minimal overhead\n    if range_size <= 65536:  # Reasonable memory limit\n        # Use the fastest counting approach\n        counts = [0] * range_size\n        \n        # Minimize attribute lookups in hot loop\n        offset = min_val\n        for val in data:\n            counts[val - offset] += 1\n        \n        # Fast reconstruction using list comprehension where possible\n        result = []\n        result_extend = result.extend  # Cache method lookup\n        \n        for i, count in enumerate(counts):\n            if count:\n                # For small counts, direct extend is faster than multiplication\n                if count == 1:\n                    result.append(i + offset)\n                elif count <= 4:\n                    val = i + offset\n                    for _ in range(count):\n                        result.append(val)\n                else:\n                    result_extend([i + offset] * count)\n        \n        return result\n    \n    else:\n        # Fallback to Timsort for very large ranges\n        return sorted(data)",
+      "status": "success",
+      "is_new_best": true,
+      "stats": {
+        "median_ms": 11.7512,
+        "mean_ms": 11.7409,
+        "min_ms": 11.4423,
+        "max_ms": 11.9543,
+        "stdev_ms": 0.1541,
+        "all_ms": [
+          11.4423,
+          11.8021,
+          11.9543,
+          11.7512,
+          11.7352,
+          11.7932,
+          11.708
+        ]
+      }
+    },
+    {
+      "iteration": 8,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    n = len(data)\n    if n <= 1:\n        return data[:]\n    \n    # Single-pass min/max with early termination optimization\n    min_val = max_val = data[0]\n    if n > 1000:  # Only optimize for larger arrays\n        # Check first few elements to get better initial bounds\n        sample_end = min(100, n)\n        for i in range(1, sample_end):\n            val = data[i]\n            if val < min_val:\n                min_val = val\n            elif val > max_val:\n                max_val = val\n    \n    # Complete scan with better initial bounds\n    for val in data:\n        if val < min_val:\n            min_val = val\n        elif val > max_val:\n            max_val = val\n    \n    range_size = max_val - min_val + 1\n    \n    # Fallback for sparse data\n    if range_size > n * 6:\n        return sorted(data)\n    \n    # Use array.array for counting to reduce memory overhead\n    if range_size <= 100000:\n        import array\n        \n        # Use unsigned int array for counts - more cache-friendly\n        counts = array.array('L', [0] * range_size)\n        \n        # Fast counting with buffer protocol\n        offset = min_val\n        for val in data:\n            counts[val - offset] += 1\n        \n        # Pre-allocate result array for zero-copy construction\n        result_array = array.array('l')  # signed int\n        \n        # Bulk operations for better performance\n        for i in range(range_size):\n            count = counts[i]\n            if count:\n                val = i + offset\n                if count == 1:\n                    result_array.append(val)\n                else:\n                    # Extend with repeated values - array.extend is optimized\n                    result_array.extend([val] * count)\n        \n        # Convert back to list - this is a fast memcpy operation\n        return result_array.tolist()\n    \n    else:\n        return sorted(data)",
+      "status": "success",
+      "is_new_best": true,
+      "stats": {
+        "median_ms": 11.4572,
+        "mean_ms": 11.4649,
+        "min_ms": 11.2911,
+        "max_ms": 11.678,
+        "stdev_ms": 0.1185,
+        "all_ms": [
+          11.2911,
+          11.4867,
+          11.5134,
+          11.3973,
+          11.4305,
+          11.4572,
+          11.678
+        ]
+      }
+    }
+  ]
+}

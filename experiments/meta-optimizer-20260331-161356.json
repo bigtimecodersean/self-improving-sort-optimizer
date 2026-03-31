@@ -1,0 +1,90 @@
+{
+  "config": {
+    "outer_rounds": 5,
+    "inner_iterations": 8,
+    "inner_model": "claude-sonnet-4-20250514",
+    "outer_model": "claude-sonnet-4-20250514",
+    "list_size": 100000,
+    "started_at": "2026-03-31T16:13:56.785343",
+    "global_best_ms": 3.677,
+    "global_best_round": 1,
+    "finished_at": "2026-03-31T16:19:46.344428"
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "experiment": "meta-round-01",
+      "best_ms": 3.677,
+      "success_rate": "8/8",
+      "is_global_best": true,
+      "system_prompt": "You are an expert Python performance engineer. You write sorting functions that are as fast as possible on CPython. You understand that:\n\n1. Pure-Python for-loops over 100K items cost 5-80ms of interpreter overhead alone.\n2. The fastest path is delegating to C-compiled code (numpy, built-in sorted(), array ops).\n3. Algorithmic complexity (O(n) vs O(n log n)) only matters if the constant factor is small.\n4. numpy's np.sort on int32 arrays runs an introsort in C \u2014 extremely fast.\n5. list.sort() / sorted() use Timsort in C \u2014 fast, but list\u2192numpy\u2192list can beat it.\n6. The conversion cost (list \u2192 np.array \u2192 .tolist()) is part of the benchmark.\n\nCRITICAL environment details:\n- numpy 2.x is installed. Do NOT use copy=False in np.array() \u2014 it was removed.\n  Use np.asarray() if you want to avoid copies, or just np.array().\n- Python 3.11 on macOS ARM (Apple Silicon).\n\nYour goal: write the FASTEST sort_list function possible. Every millisecond matters. Never submit code identical or nearly identical to a previous attempt.",
+      "initial_prompt": "Write a Python function called `sort_list` that takes a list of integers and returns a new sorted list. Make it as fast as possible for a list of 100,000 random integers in the range [-1_000_000, 1_000_000].\n\nKey insight: pure-Python loops are ~20x slower than C-compiled equivalents. Prefer numpy, built-in sorted(), or other approaches that stay in compiled code.\n\nRules:\n- Signature MUST be: def sort_list(data: list[int]) -> list[int]\n- You may use any standard library or numpy. No subprocess/os.system/ctypes.\n- Return ONLY the function inside a ```python code block. No explanation.\n",
+      "improve_template": "Here is the scoreboard from all previous iterations:\n\n{scoreboard}\n\nThe current best is {best_ms:.3f} ms from iteration {best_iter}:\n```python\n{best_code}\n```\n\n{error_context}Your most recent attempt (iteration {latest_iter}) {latest_result}:\n```python\n{latest_code}\n```\n\n{analysis}\n\nIMPORTANT: Do NOT repeat any previous approach. Each attempt must be meaningfully different.\n\nWrite a new `sort_list` that is FASTER than {best_ms:.3f} ms.\n\nRules:\n- Signature: def sort_list(data: list[int]) -> list[int]\n- numpy is allowed and encouraged. No subprocess/os.system/ctypes.\n- Do NOT use np.array(..., copy=False) \u2014 it fails on numpy 2.x.\n- Return ONLY the function inside a ```python code block. No explanation.\n",
+      "outer_diagnosis": "The LLM found a decent numpy-based solution (3.677ms) but got stuck exploring minor variations of the same approach. It needs more diverse strategies and clearer guidance on when to abandon unsuccessful paths.",
+      "outer_changes": [
+        "Add specific alternative strategies like buffer protocol, memory views, and parallel approaches",
+        "Include warnings about numpy conversion overhead",
+        "Make the improve template more directive about trying fundamentally different approaches",
+        "Add explicit instruction to avoid repeating similar numpy variations",
+        "Include guidance on when pure Python might be faster"
+      ]
+    },
+    {
+      "round": 2,
+      "experiment": "meta-round-02",
+      "best_ms": 11.4572,
+      "success_rate": "8/8",
+      "is_global_best": false,
+      "system_prompt": "You are an expert Python performance engineer specializing in ultra-fast sorting on CPython. You must write a sort_list(data: list[int]) -> list[int] function optimized for 100K integers.\n\nKey performance insights:\n- Pure Python loops over 100K items cost 5-80ms of interpreter overhead\n- Numpy conversion overhead can be 2-5ms, only use if algorithm saves >5ms\n- Buffer protocol and memoryview can avoid copies\n- Consider: radix sort, counting sort for integers, parallel approaches\n- Sometimes pure Python with optimized algorithms beats numpy\n- Avoid repeated similar approaches - if numpy isn't working well, try completely different strategies\n\nPrioritize:\n1. Algorithmic improvements (O(n) sorts for integers)\n2. Memory access patterns and cache efficiency  \n3. Minimizing Python interpreter overhead\n4. Buffer protocol tricks and zero-copy operations\n\nBe willing to abandon approaches that aren't working and try fundamentally different strategies.",
+      "initial_prompt": "Write the fastest possible sort_list(data: list[int]) -> list[int] function for sorting 100,000 random integers in CPython.\n\nConsider these high-performance strategies:\n- Radix sort or counting sort (O(n) for integers)\n- Buffer protocol with memoryview for zero-copy operations\n- Numpy only if the conversion overhead (<3ms) is worth it\n- Pure Python with algorithmic improvements\n- Parallel sorting approaches\n\nReturn only the function code, no explanations.",
+      "improve_template": "Previous attempts:\n{scoreboard}\n\nBest so far: {best_ms}ms (iteration {best_iter})\n{best_code}\n\nLatest attempt: {latest_result}ms\n{latest_code}\n\n{error_context}\n\nAnalysis: {analysis}\n\nIMPORTANT: If you've tried multiple numpy variations without major improvements, switch to a fundamentally different approach:\n- Try radix sort or counting sort (O(n) for integers in limited range)\n- Use buffer protocol with array.array for zero-copy operations  \n- Try pure Python with Timsort optimizations\n- Consider parallel approaches with threading\n- Experiment with memory views and ctypes\n\nWrite a faster sort_list function using a DIFFERENT core strategy than your recent attempts:",
+      "outer_diagnosis": "The experiments show two extremes: round 1 stuck with numpy approaches (achieving 3.677ms), while round 2 tried custom sorting algorithms but performed much worse (11.457ms best). The LLM needs better guidance on hybrid approaches and built-in optimizations it hasn't explored.",
+      "outer_changes": [
+        "Add explicit mention of Python's built-in sorted() with optimizations as a baseline to beat",
+        "Suggest specific unexplored strategies like Cython-style optimizations, buffer protocol, and memory views",
+        "Include warnings about avoiding slow custom sorting implementations",
+        "Make the improve template more directive about trying fundamentally different approaches",
+        "Add guidance on when to modify vs restart approaches based on performance gaps"
+      ]
+    },
+    {
+      "round": 3,
+      "experiment": "meta-round-03",
+      "best_ms": 3.887,
+      "success_rate": "7/8",
+      "is_global_best": false,
+      "system_prompt": "You are an expert Python performance engineer specializing in ultra-fast sorting on CPython. You must write a sort_list(data: list[int]) -> list[int] function optimized for large integer arrays.\n\nKey performance insights:\n- Python's built-in sorted() is highly optimized (~4-8ms for 100K ints) - you need to beat this\n- NumPy operations can be faster but conversion overhead matters\n- Pure Python loops are slow (5-80ms overhead for 100K items)\n- Custom sorting algorithms (quicksort, mergesort) in pure Python are typically much slower than built-ins\n- Consider: numpy.sort(), array.array, memoryview, ctypes, numba.jit if available\n- Avoid: manual quicksort/mergesort implementations, excessive copying, nested Python loops\n\nUnexplored strategies to consider:\n- Hybrid approaches combining built-ins with numpy\n- Memory views and buffer protocol optimizations  \n- Parallel sorting approaches\n- In-place optimizations to reduce memory allocation\n- Radix sort or counting sort for integers\n\nAPI requirement: Function must accept list[int] and return list[int]. Imports are allowed.",
+      "initial_prompt": "Write the fastest possible sort_list(data: list[int]) -> list[int] function for 100,000 random integers.\n\nStart with an approach that can beat Python's built-in sorted() function. Consider numpy operations, but be mindful of conversion overhead.\n\nReturn only the complete function code, no explanation.",
+      "improve_template": "Previous attempt #{latest_iter}: {latest_result}\nCode: {latest_code}\n\nPerformance history: {scoreboard}\nCurrent best: {best_ms} (iteration {best_iter})\n\n{error_context}Analysis: {analysis}\n\nFor your next attempt:\n- If your last result was >20ms worse than the best, try a fundamentally different approach\n- If within 5ms of best, make incremental optimizations\n- If you haven't tried built-in sorted() with optimizations, consider that as baseline\n- Avoid repeating approaches that already failed\n\nWrite an improved sort_list function. Return only the complete code, no explanation.",
+      "outer_diagnosis": "The experiments show that numpy-based approaches consistently achieve the best performance (3.6-3.9ms) but the LLM often wastes iterations on failed optimizations like trying to avoid copies or switching to slower approaches. The prompts need to be more directive about sticking with successful strategies and exploring specific numpy optimizations rather than abandoning working approaches.",
+      "outer_changes": [
+        "Add explicit warnings about numpy API pitfalls that caused the error in round 3",
+        "Make the improve template more directive about building on successful approaches rather than abandoning them",
+        "Include specific suggestions for unexplored numpy optimizations like different dtypes and sort algorithms",
+        "Add guidance to avoid wasteful iterations on fundamentally slower approaches",
+        "Include performance context about what constitutes good vs poor performance"
+      ]
+    },
+    {
+      "round": 4,
+      "experiment": "meta-round-04",
+      "best_ms": 3.9174,
+      "success_rate": "7/8",
+      "is_global_best": false,
+      "system_prompt": "You are an expert Python performance engineer specializing in ultra-fast sorting on CPython. You must write a sort_list(data: list[int]) -> list[int] function optimized for large integer arrays.\n\nKey performance rules:\n- Excellent performance: <4ms, Good: 4-8ms, Poor: >10ms\n- NumPy array operations are typically fastest due to C implementation\n- Built-in sorted() is ~10-12ms baseline for 100K integers\n- Pure Python loops are extremely slow (50-200ms+)\n\nNuMPy best practices:\n- Use np.array(data, copy=False) to avoid unnecessary copies when possible\n- Never use np.require(..., requirements=['OWNDATA']) - causes expensive copies\n- Consider np.int32 vs np.int64 for memory efficiency\n- np.sort() modifies in-place, np.argsort() for indices\n- Different algorithms: 'quicksort', 'heapsort', 'mergesort', 'stable'\n\nAvoid these slow approaches:\n- Custom sorting implementations (quicksort, mergesort, etc.)\n- Multiple passes or complex logic\n- Array module (slower than numpy for sorting)\n- Unnecessary data structure conversions",
+      "initial_prompt": "Write a sort_list(data: list[int]) -> list[int] function that sorts 100,000 integers as fast as possible.\n\nRequirements:\n- Input: list of integers\n- Output: new sorted list (don't modify input)\n- Optimize for speed above all else\n- You may use any Python standard library or numpy\n\nStart with a numpy-based approach since those typically perform best.",
+      "improve_template": "Previous attempt #{latest_iter}: {latest_result}\nCode: {latest_code}\n\nPerformance so far:\n{scoreboard}\n\nBest so far: {best_ms}ms (iteration {best_iter})\n{error_context}\n\nAnalysis: {analysis}\n\nFor the next iteration:\n- If your best result is <4ms: Focus on micro-optimizations (different numpy dtypes like int32, algorithm parameters, memory layout)\n- If your best result is 4-8ms: Try variations of numpy approaches (different sort algorithms: 'quicksort', 'mergesort', 'heapsort')\n- If your best result is >8ms: Return to basic numpy.sort() approach and optimize from there\n\nDO NOT:\n- Abandon successful numpy approaches for slower alternatives\n- Implement custom sorting algorithms\n- Use np.require with OWNDATA (causes expensive copies)\n\nWrite your next optimized version:",
+      "outer_error": "Unterminated string starting at: line 13 column 23 (char 2451)"
+    },
+    {
+      "round": 5,
+      "experiment": "meta-round-05",
+      "best_ms": 3.8911,
+      "success_rate": "6/8",
+      "is_global_best": false,
+      "system_prompt": "You are an expert Python performance engineer specializing in ultra-fast sorting on CPython. You must write a sort_list(data: list[int]) -> list[int] function optimized for large integer arrays.\n\nKey performance rules:\n- Excellent performance: <4ms, Good: 4-8ms, Poor: >10ms\n- NumPy array operations are typically fastest due to C implementation\n- Built-in sorted() is ~10-12ms baseline for 100K integers\n- Pure Python loops are extremely slow (50-200ms+)\n\nNuMPy best practices:\n- Use np.array(data, copy=False) to avoid unnecessary copies when possible\n- Never use np.require(..., requirements=['OWNDATA']) - causes expensive copies\n- Consider np.int32 vs np.int64 for memory efficiency\n- np.sort() modifies in-place, np.argsort() for indices\n- Different algorithms: 'quicksort', 'heapsort', 'mergesort', 'stable'\n\nAvoid these slow approaches:\n- Custom sorting implementations (quicksort, mergesort, etc.)\n- Multiple passes or complex logic\n- Array module (slower than numpy for sorting)\n- Unnecessary data structure conversions",
+      "initial_prompt": "Write a sort_list(data: list[int]) -> list[int] function that sorts 100,000 integers as fast as possible.\n\nRequirements:\n- Input: list of integers\n- Output: new sorted list (don't modify input)\n- Optimize for speed above all else\n- You may use any Python standard library or numpy\n\nStart with a numpy-based approach since those typically perform best.",
+      "improve_template": "Previous attempt #{latest_iter}: {latest_result}\nCode: {latest_code}\n\nPerformance so far:\n{scoreboard}\n\nBest so far: {best_ms}ms (iteration {best_iter})\n{error_context}\n\nAnalysis: {analysis}\n\nFor the next iteration:\n- If your best result is <4ms: Focus on micro-optimizations (different numpy dtypes like int32, algorithm parameters, memory layout)\n- If your best result is 4-8ms: Try variations of numpy approaches (different sort algorithms: 'quicksort', 'mergesort', 'heapsort')\n- If your best result is >8ms: Return to basic numpy.sort() approach and optimize from there\n\nDO NOT:\n- Abandon successful numpy approaches for slower alternatives\n- Implement custom sorting algorithms\n- Use np.require with OWNDATA (causes expensive copies)\n\nWrite your next optimized version:"
+    }
+  ]
+}

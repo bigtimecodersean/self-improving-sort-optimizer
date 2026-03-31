@@ -1,0 +1,35 @@
+[
+  {
+    "experiment": "v1-baseline",
+    "file": "v1-baseline.json",
+    "model": "claude-sonnet-4-20250514",
+    "list_size": 100000,
+    "iterations": 8,
+    "started_at": "2026-03-31T15:39:55.143553",
+    "best_ms": 3.952,
+    "best_iter": 1,
+    "prompt_version": "v1-naive"
+  },
+  {
+    "experiment": "v2-smart-prompts",
+    "file": "v2-smart-prompts.json",
+    "model": "claude-sonnet-4-20250514",
+    "list_size": 100000,
+    "iterations": 8,
+    "started_at": "2026-03-31T15:49:20.264218",
+    "best_ms": 3.7543,
+    "best_iter": 3,
+    "prompt_version": "v2-smart-context"
+  },
+  {
+    "experiment": "v3-error-feedback",
+    "file": "v3-error-feedback.json",
+    "model": "claude-sonnet-4-20250514",
+    "list_size": 100000,
+    "iterations": 8,
+    "started_at": "2026-03-31T15:56:44.967170",
+    "best_ms": 3.5422,
+    "best_iter": 2,
+    "prompt_version": "v3-error-feedback"
+  }
+]

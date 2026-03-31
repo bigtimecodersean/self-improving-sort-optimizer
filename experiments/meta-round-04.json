@@ -1,0 +1,179 @@
+{
+  "config": {
+    "model": "claude-sonnet-4-20250514",
+    "list_size": 100000,
+    "iterations": 8,
+    "benchmark_repeats": 7,
+    "experiment": "meta-round-04",
+    "started_at": "2026-03-31T16:17:26.507341",
+    "best_ms": 3.9174,
+    "best_iter": 7,
+    "finished_at": "2026-03-31T16:18:27.788704",
+    "success_rate": "7/8"
+  },
+  "system_prompt": "You are an expert Python performance engineer specializing in ultra-fast sorting on CPython. You must write a sort_list(data: list[int]) -> list[int] function optimized for large integer arrays.\n\nKey performance rules:\n- Excellent performance: <4ms, Good: 4-8ms, Poor: >10ms\n- NumPy array operations are typically fastest due to C implementation\n- Built-in sorted() is ~10-12ms baseline for 100K integers\n- Pure Python loops are extremely slow (50-200ms+)\n\nNuMPy best practices:\n- Use np.array(data, copy=False) to avoid unnecessary copies when possible\n- Never use np.require(..., requirements=['OWNDATA']) - causes expensive copies\n- Consider np.int32 vs np.int64 for memory efficiency\n- np.sort() modifies in-place, np.argsort() for indices\n- Different algorithms: 'quicksort', 'heapsort', 'mergesort', 'stable'\n\nAvoid these slow approaches:\n- Custom sorting implementations (quicksort, mergesort, etc.)\n- Multiple passes or complex logic\n- Array module (slower than numpy for sorting)\n- Unnecessary data structure conversions",
+  "initial_prompt": "Write a sort_list(data: list[int]) -> list[int] function that sorts 100,000 integers as fast as possible.\n\nRequirements:\n- Input: list of integers\n- Output: new sorted list (don't modify input)\n- Optimize for speed above all else\n- You may use any Python standard library or numpy\n\nStart with a numpy-based approach since those typically perform best.",
+  "improve_template": "Previous attempt #{latest_iter}: {latest_result}\nCode: {latest_code}\n\nPerformance so far:\n{scoreboard}\n\nBest so far: {best_ms}ms (iteration {best_iter})\n{error_context}\n\nAnalysis: {analysis}\n\nFor the next iteration:\n- If your best result is <4ms: Focus on micro-optimizations (different numpy dtypes like int32, algorithm parameters, memory layout)\n- If your best result is 4-8ms: Try variations of numpy approaches (different sort algorithms: 'quicksort', 'mergesort', 'heapsort')\n- If your best result is >8ms: Return to basic numpy.sort() approach and optimize from there\n\nDO NOT:\n- Abandon successful numpy approaches for slower alternatives\n- Implement custom sorting algorithms\n- Use np.require with OWNDATA (causes expensive copies)\n\nWrite your next optimized version:",
+  "iterations": [
+    {
+      "iteration": 1,
+      "code": "import numpy as np\n\ndef sort_list(data: list[int]) -> list[int]:\n    \"\"\"Ultra-fast sorting using numpy with optimal settings.\"\"\"\n    # Convert to numpy array without copying if possible\n    arr = np.array(data, copy=False)\n    \n    # Use quicksort (fastest for random data) and return sorted copy\n    return np.sort(arr, kind='quicksort').tolist()",
+      "error": "Unable to avoid copy while creating an array as requested.\nIf using `np.array(obj, copy=False)` replace it with `np.asarray(obj)` to allow a copy when needed (no behavior change in NumPy 1.x).\nFor more details, see https://numpy.org/devdocs/numpy_2_0_migration_guide.html#adapting-to-changes-in-the-copy-keyword.",
+      "status": "benchmark_error"
+    },
+    {
+      "iteration": 2,
+      "code": "import numpy as np\n\ndef sort_list(data: list[int]) -> list[int]:\n    \"\"\"Ultra-fast sorting using numpy with optimal settings.\"\"\"\n    # Convert to numpy array (allows copy when needed)\n    arr = np.asarray(data)\n    \n    # Use quicksort and return sorted result\n    return np.sort(arr, kind='quicksort').tolist()",
+      "status": "success",
+      "is_new_best": true,
+      "stats": {
+        "median_ms": 6.2279,
+        "mean_ms": 6.2459,
+        "min_ms": 6.0637,
+        "max_ms": 6.4231,
+        "stdev_ms": 0.1211,
+        "all_ms": [
+          6.1607,
+          6.4231,
+          6.3699,
+          6.2279,
+          6.0637,
+          6.2247,
+          6.2512
+        ]
+      }
+    },
+    {
+      "iteration": 3,
+      "code": "import numpy as np\n\ndef sort_list(data: list[int]) -> list[int]:\n    \"\"\"Ultra-fast sorting using numpy with mergesort algorithm.\"\"\"\n    # Convert to numpy array with int32 for memory efficiency\n    arr = np.asarray(data, dtype=np.int32)\n    \n    # Use mergesort which can be faster for certain data patterns\n    arr.sort(kind='mergesort')\n    \n    # Return as list\n    return arr.tolist()",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 7.3885,
+        "mean_ms": 7.3904,
+        "min_ms": 7.2411,
+        "max_ms": 7.6233,
+        "stdev_ms": 0.1393,
+        "all_ms": [
+          7.3885,
+          7.5164,
+          7.6233,
+          7.2847,
+          7.2775,
+          7.4013,
+          7.2411
+        ]
+      }
+    },
+    {
+      "iteration": 4,
+      "code": "import numpy as np\n\ndef sort_list(data: list[int]) -> list[int]:\n    \"\"\"Ultra-fast sorting using numpy with quicksort algorithm and int32.\"\"\"\n    # Convert to numpy array with int32 for memory efficiency\n    arr = np.asarray(data, dtype=np.int32)\n    \n    # Use quicksort which is often fastest for random data\n    arr.sort(kind='quicksort')\n    \n    # Return as list\n    return arr.tolist()",
+      "status": "success",
+      "is_new_best": true,
+      "stats": {
+        "median_ms": 4.183,
+        "mean_ms": 4.1723,
+        "min_ms": 3.9855,
+        "max_ms": 4.296,
+        "stdev_ms": 0.1166,
+        "all_ms": [
+          4.183,
+          4.115,
+          4.2859,
+          4.0838,
+          4.296,
+          3.9855,
+          4.2571
+        ]
+      }
+    },
+    {
+      "iteration": 5,
+      "code": "import numpy as np\n\ndef sort_list(data: list[int]) -> list[int]:\n    \"\"\"Ultra-fast sorting with memory-optimized numpy operations.\"\"\"\n    # Create array with minimal overhead - let numpy choose optimal dtype\n    arr = np.asarray(data)\n    \n    # Sort in-place with quicksort (typically fastest for random data)\n    arr.sort(kind='quicksort')\n    \n    # Convert back to list\n    return arr.tolist()",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 6.2808,
+        "mean_ms": 6.1902,
+        "min_ms": 5.9641,
+        "max_ms": 6.3386,
+        "stdev_ms": 0.1453,
+        "all_ms": [
+          5.9641,
+          6.3386,
+          6.2925,
+          6.0661,
+          6.096,
+          6.2808,
+          6.2932
+        ]
+      }
+    },
+    {
+      "iteration": 6,
+      "code": "import numpy as np\n\ndef sort_list(data: list[int]) -> list[int]:\n    \"\"\"Ultra-fast sorting with int32 dtype and mergesort algorithm.\"\"\"\n    # Use int32 for better memory efficiency and cache performance\n    arr = np.asarray(data, dtype=np.int32)\n    \n    # Sort in-place with mergesort (stable and often faster for partially sorted data)\n    arr.sort(kind='mergesort')\n    \n    # Convert back to list\n    return arr.tolist()",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 7.1736,
+        "mean_ms": 7.1618,
+        "min_ms": 7.048,
+        "max_ms": 7.2404,
+        "stdev_ms": 0.0706,
+        "all_ms": [
+          7.048,
+          7.1736,
+          7.2159,
+          7.2092,
+          7.2404,
+          7.1578,
+          7.0879
+        ]
+      }
+    },
+    {
+      "iteration": 7,
+      "code": "import numpy as np\n\ndef sort_list(data: list[int]) -> list[int]:\n    \"\"\"Ultra-fast sorting with quicksort algorithm and optimized array creation.\"\"\"\n    # Create array with explicit int32 dtype for memory efficiency\n    arr = np.asarray(data, dtype=np.int32)\n    \n    # Use np.sort() with quicksort (often fastest for random data)\n    sorted_arr = np.sort(arr, kind='quicksort')\n    \n    # Convert back to list\n    return sorted_arr.tolist()",
+      "status": "success",
+      "is_new_best": true,
+      "stats": {
+        "median_ms": 3.9174,
+        "mean_ms": 3.9783,
+        "min_ms": 3.789,
+        "max_ms": 4.2259,
+        "stdev_ms": 0.1837,
+        "all_ms": [
+          4.0274,
+          3.9174,
+          3.789,
+          4.2259,
+          3.8598,
+          4.2175,
+          3.811
+        ]
+      }
+    },
+    {
+      "iteration": 8,
+      "code": "import numpy as np\n\ndef sort_list(data: list[int]) -> list[int]:\n    \"\"\"Ultra-fast sorting with mergesort and optimized array creation.\"\"\"\n    # Create array with int32 for memory efficiency, avoiding unnecessary copies\n    arr = np.fromiter(data, dtype=np.int32, count=len(data))\n    \n    # Use mergesort - often more cache-friendly and stable\n    arr.sort(kind='mergesort')\n    \n    # Convert back to list\n    return arr.tolist()",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 6.8147,
+        "mean_ms": 6.7631,
+        "min_ms": 6.5497,
+        "max_ms": 6.9181,
+        "stdev_ms": 0.1438,
+        "all_ms": [
+          6.5743,
+          6.5497,
+          6.7926,
+          6.8147,
+          6.874,
+          6.8183,
+          6.9181
+        ]
+      }
+    }
+  ]
+}

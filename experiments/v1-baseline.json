@@ -1,0 +1,177 @@
+{
+  "config": {
+    "model": "claude-sonnet-4-20250514",
+    "list_size": 100000,
+    "iterations": 8,
+    "benchmark_repeats": 5,
+    "started_at": "2026-03-31T15:39:55.143553",
+    "best_ms": 3.952,
+    "best_iter": 1,
+    "experiment": "v1-baseline",
+    "prompt_version": "v1-naive",
+    "changes_from_v1": []
+  },
+  "iterations": [
+    {
+      "iteration": 1,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    import numpy as np\n    return np.sort(np.array(data, dtype=np.int32)).tolist()",
+      "status": "success",
+      "is_new_best": true,
+      "stats": {
+        "median_ms": 3.952,
+        "mean_ms": 3.9509,
+        "min_ms": 3.7437,
+        "max_ms": 4.1525,
+        "stdev_ms": 0.1608,
+        "all_ms": [
+          4.053,
+          3.7437,
+          3.952,
+          3.8535,
+          4.1525
+        ]
+      }
+    },
+    {
+      "iteration": 2,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    if len(data) <= 1:\n        return data[:]\n    \n    # Handle negative numbers by separating them\n    negatives = []\n    positives = []\n    \n    for num in data:\n        if num < 0:\n            negatives.append(-num)\n        else:\n            positives.append(num)\n    \n    # Radix sort for positives\n    if positives:\n        max_val = max(positives)\n        exp = 1\n        while max_val // exp > 0:\n            # Counting sort by digit\n            count = [0] * 10\n            for num in positives:\n                count[(num // exp) % 10] += 1\n            \n            for i in range(1, 10):\n                count[i] += count[i - 1]\n            \n            output = [0] * len(positives)\n            for i in range(len(positives) - 1, -1, -1):\n                digit = (positives[i] // exp) % 10\n                output[count[digit] - 1] = positives[i]\n                count[digit] -= 1\n            \n            positives = output\n            exp *= 10\n    \n    # Radix sort for negatives (stored as positive values)\n    if negatives:\n        max_val = max(negatives)\n        exp = 1\n        while max_val // exp > 0:\n            count = [0] * 10\n            for num in negatives:\n                count[(num // exp) % 10] += 1\n            \n            for i in range(1, 10):\n                count[i] += count[i - 1]\n            \n            output = [0] * len(negatives)\n            for i in range(len(negatives) - 1, -1, -1):\n                digit = (negatives[i] // exp) % 10\n                output[count[digit] - 1] = negatives[i]\n                count[digit] -= 1\n            \n            negatives = output\n            exp *= 10\n        \n        # Convert back to negative and reverse for descending order\n        negatives = [-num for num in reversed(negatives)]\n    \n    return negatives + positives",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 82.3272,
+        "mean_ms": 83.3576,
+        "min_ms": 81.9313,
+        "max_ms": 86.7768,
+        "stdev_ms": 1.9923,
+        "all_ms": [
+          81.9313,
+          82.3272,
+          82.3163,
+          86.7768,
+          83.4364
+        ]
+      }
+    },
+    {
+      "iteration": 3,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    if len(data) <= 1:\n        return data[:]\n    \n    # Find min and max to determine range\n    min_val = min(data)\n    max_val = max(data)\n    \n    # Use counting sort\n    range_size = max_val - min_val + 1\n    count = [0] * range_size\n    \n    # Count occurrences\n    for num in data:\n        count[num - min_val] += 1\n    \n    # Reconstruct sorted array\n    result = []\n    for i in range(range_size):\n        if count[i] > 0:\n            result.extend([i + min_val] * count[i])\n    \n    return result",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 54.0778,
+        "mean_ms": 54.3916,
+        "min_ms": 53.493,
+        "max_ms": 55.8641,
+        "stdev_ms": 0.8945,
+        "all_ms": [
+          55.8641,
+          53.493,
+          54.4762,
+          54.0466,
+          54.0778
+        ]
+      }
+    },
+    {
+      "iteration": 4,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    if len(data) <= 64:\n        return sorted(data)\n    \n    # Find min and max in single pass\n    if not data:\n        return []\n    \n    min_val = max_val = data[0]\n    for num in data:\n        if num < min_val:\n            min_val = num\n        elif num > max_val:\n            max_val = num\n    \n    range_size = max_val - min_val + 1\n    \n    # Use timsort if range is too large relative to data size\n    if range_size > len(data) * 4:\n        return sorted(data)\n    \n    # Optimized counting sort\n    count = [0] * range_size\n    \n    # Count occurrences\n    for num in data:\n        count[num - min_val] += 1\n    \n    # Reconstruct more efficiently\n    result = [0] * len(data)\n    idx = 0\n    for i, cnt in enumerate(count):\n        if cnt:\n            val = i + min_val\n            for _ in range(cnt):\n                result[idx] = val\n                idx += 1\n    \n    return result",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 11.6055,
+        "mean_ms": 11.608,
+        "min_ms": 11.4273,
+        "max_ms": 11.8153,
+        "stdev_ms": 0.1541,
+        "all_ms": [
+          11.6055,
+          11.4273,
+          11.4985,
+          11.8153,
+          11.6935
+        ]
+      }
+    },
+    {
+      "iteration": 5,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    n = len(data)\n    if n <= 1:\n        return data[:]\n    \n    # Use timsort for small arrays\n    if n <= 32:\n        return sorted(data)\n    \n    # Quick min/max check for counting sort viability\n    min_val = max_val = data[0]\n    for i in range(1, min(n, 100)):  # Sample first 100 elements only\n        val = data[i]\n        if val < min_val:\n            min_val = val\n        elif val > max_val:\n            max_val = val\n    \n    # If sampled range looks reasonable, do full scan\n    range_size = max_val - min_val + 1\n    if range_size <= n * 2:\n        # Complete the min/max scan if we only sampled\n        if n > 100:\n            for i in range(100, n):\n                val = data[i]\n                if val < min_val:\n                    min_val = val\n                elif val > max_val:\n                    max_val = val\n            range_size = max_val - min_val + 1\n        \n        # Final check for counting sort\n        if range_size <= n * 3:\n            # Counting sort\n            count = [0] * range_size\n            for num in data:\n                count[num - min_val] += 1\n            \n            result = []\n            for i, cnt in enumerate(count):\n                if cnt:\n                    result.extend([i + min_val] * cnt)\n            return result\n    \n    # Fall back to timsort\n    return sorted(data)",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 16.2071,
+        "mean_ms": 14.3865,
+        "min_ms": 10.4962,
+        "max_ms": 17.7218,
+        "stdev_ms": 3.4587,
+        "all_ms": [
+          16.7098,
+          16.2071,
+          17.7218,
+          10.7977,
+          10.4962
+        ]
+      }
+    },
+    {
+      "iteration": 6,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    n = len(data)\n    if n <= 1:\n        return data[:]\n    \n    # Use timsort for small arrays\n    if n <= 64:\n        return sorted(data)\n    \n    # Check if all numbers are non-negative for simple radix sort\n    has_negative = False\n    max_val = 0\n    for num in data:\n        if num < 0:\n            has_negative = True\n            max_val = max(max_val, abs(num))\n        else:\n            max_val = max(max_val, num)\n    \n    # If max value is too large, fall back to timsort\n    if max_val > 10**7:\n        return sorted(data)\n    \n    # Radix sort implementation\n    if has_negative:\n        # Handle negatives by offsetting\n        offset = max_val + 1\n        working_data = [num + offset for num in data]\n        max_val = 2 * max_val + 1\n    else:\n        working_data = data[:]\n    \n    # Radix sort with base 256 for better cache performance\n    base = 256\n    exp = 1\n    \n    while max_val // exp > 0:\n        # Counting sort for current digit\n        count = [0] * base\n        \n        # Count occurrences\n        for num in working_data:\n            count[(num // exp) % base] += 1\n        \n        # Change count[i] to actual position\n        for i in range(1, base):\n            count[i] += count[i - 1]\n        \n        # Build output array\n        output = [0] * n\n        for i in range(n - 1, -1, -1):\n            digit = (working_data[i] // exp) % base\n            output[count[digit] - 1] = working_data[i]\n            count[digit] -= 1\n        \n        working_data = output\n        exp *= base\n    \n    # Convert back if we had negatives\n    if has_negative:\n        return [num - offset for num in working_data]\n    else:\n        return working_data",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 51.4522,
+        "mean_ms": 51.3765,
+        "min_ms": 50.9008,
+        "max_ms": 51.6379,
+        "stdev_ms": 0.2812,
+        "all_ms": [
+          50.9008,
+          51.5021,
+          51.3893,
+          51.4522,
+          51.6379
+        ]
+      }
+    },
+    {
+      "iteration": 7,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    n = len(data)\n    if n <= 1:\n        return data[:]\n    \n    # For very small arrays, just use timsort\n    if n <= 16:\n        return sorted(data)\n    \n    # Find min and max in one pass\n    min_val = max_val = data[0]\n    for num in data:\n        if num < min_val:\n            min_val = num\n        elif num > max_val:\n            max_val = num\n    \n    range_size = max_val - min_val + 1\n    \n    # Use counting sort if range is reasonable\n    if range_size <= 4 * n and range_size <= 100000:\n        # Counting sort\n        counts = [0] * range_size\n        for num in data:\n            counts[num - min_val] += 1\n        \n        result = []\n        for i, count in enumerate(counts):\n            if count > 0:\n                result.extend([i + min_val] * count)\n        return result\n    \n    # Fall back to timsort for large ranges\n    return sorted(data)",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 11.5901,
+        "mean_ms": 11.5897,
+        "min_ms": 11.5306,
+        "max_ms": 11.6628,
+        "stdev_ms": 0.0484,
+        "all_ms": [
+          11.6628,
+          11.5901,
+          11.5306,
+          11.5677,
+          11.5973
+        ]
+      }
+    },
+    {
+      "iteration": 8,
+      "code": "def sort_list(data: list[int]) -> list[int]:\n    if len(data) <= 1:\n        return data[:]\n    \n    # For very small arrays, use timsort\n    if len(data) <= 32:\n        return sorted(data)\n    \n    # Handle negative numbers by finding min value\n    min_val = min(data)\n    if min_val < 0:\n        # Offset all values to make them non-negative\n        adjusted_data = [x - min_val for x in data]\n    else:\n        adjusted_data = data[:]\n    \n    # Find maximum value to determine number of digits\n    max_val = max(adjusted_data)\n    \n    # Radix sort (base 256 for better cache performance)\n    base = 256\n    exp = 1\n    n = len(adjusted_data)\n    \n    while max_val // exp > 0:\n        # Counting sort for each digit\n        count = [0] * base\n        output = [0] * n\n        \n        # Count occurrences of each digit\n        for i in range(n):\n            index = (adjusted_data[i] // exp) % base\n            count[index] += 1\n        \n        # Calculate cumulative count\n        for i in range(1, base):\n            count[i] += count[i - 1]\n        \n        # Build output array\n        for i in range(n - 1, -1, -1):\n            index = (adjusted_data[i] // exp) % base\n            output[count[index] - 1] = adjusted_data[i]\n            count[index] -= 1\n        \n        # Copy output array to adjusted_data\n        adjusted_data = output\n        exp *= base\n    \n    # Restore original values if we had negative numbers\n    if min_val < 0:\n        return [x + min_val for x in adjusted_data]\n    else:\n        return adjusted_data",
+      "status": "success",
+      "is_new_best": false,
+      "stats": {
+        "median_ms": 50.8513,
+        "mean_ms": 54.4841,
+        "min_ms": 50.1271,
+        "max_ms": 69.8721,
+        "stdev_ms": 8.6086,
+        "all_ms": [
+          50.1271,
+          50.8513,
+          69.8721,
+          51.0015,
+          50.5687
+        ]
+      }
+    }
+  ],
+  "prompts_used": []
+}
