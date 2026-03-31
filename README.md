@@ -1,74 +1,121 @@
-# Teach a Simulated Arm to Reach
+# Self-Improving Sort Optimizer
 
-A hands-on exploration of reinforcement learning for simulated robotics — from a 2-joint arm touching a target to a four-legged ant learning to walk.
+**Can an LLM optimize its own code through a benchmark feedback loop?**
 
-## What This Is
+A toy automated AI research project that explores self-improving loops: an LLM writes a sorting function, we benchmark it, feed the result back, and ask for something faster. Across 8 experiments and 64 iterations, we tested whether this loop converges on better solutions — and whether an automated meta-optimizer can replace human prompt engineering.
 
-This project trains RL agents on [MuJoCo](https://mujoco.org/) physics environments using [Stable-Baselines3](https://stable-baselines3.readthedocs.io/). It starts simple (a 2-joint arm reaching a dot) and escalates to locomotion (a cheetah running, an ant walking). Along the way, it explores how algorithm choice and reward shaping fundamentally change what an agent learns.
+## The Setup
 
-## Setup
+The inner loop is simple:
 
-```bash
-python -m venv reacher-env
-source reacher-env/bin/activate
-pip install -r requirements.txt
+1. Ask Claude (Sonnet 4) to write a Python `sort_list` function
+2. Dynamically load and benchmark it against 100,000 random integers
+3. Feed the timing back: *"Your solution ran in X ms. The best so far is Y ms. Write a faster version."*
+4. Repeat for 8 iterations
+
+We ran this loop with three different prompt strategies (v1–v3), each informed by failures in the previous version. We then built a meta-optimizer — a second LLM call that analyzes experiment results and rewrites the prompts automatically — and ran it for 5 rounds.
+
+## Results
+
+| Experiment | Best (ms) | Success Rate | Key Behavior |
+|---|---|---|---|
+| **v1** — Naive prompt | 3.95 | 8/8 | Got lucky iter 1 with numpy, then wasted 7 iterations on pure-Python radix/counting sorts (11–82ms) |
+| **v2** — Performance context | 3.75 | 4/8 | Stayed in numpy territory, but hit a numpy 2.x API change (`copy=False` removed) and repeated the same crash 4 times |
+| **v3** — Error feedback | 3.54 | 8/8 | Best manual result. Zero errors. Explored diverse strategies while staying anchored to what worked |
+| **Meta R1** | 3.68 | 8/8 | Used v3 prompts as defaults — matched our results |
+| **Meta R2** | 11.46 | 8/8 | Outer loop pushed "diverse strategies" → catastrophic regression to pure Python |
+| **Meta R3–R5** | 3.89 | 6–7/8 | Slowly recovered but never beat R1. Success rate degraded as rewritten prompts dropped guardrails |
+
+### The winning code (3.54ms)
+
+```python
+def sort_list(data: list[int]) -> list[int]:
+    import numpy as np
+    arr = np.fromiter(data, dtype=np.int32, count=len(data))
+    arr.sort()
+    return arr.tolist()
 ```
-
-## Project Structure
-
-Scripts are numbered in the order you should run them:
-
-| Script | What it does |
-|--------|-------------|
-| `01_explore.py` | Watch random actions on Reacher — the "before" baseline |
-| `02_train_ppo.py` | Train PPO on Reacher-v5 (500k steps) |
-| `03a_train_sac.py` | Train SAC on Reacher-v5 for algorithm comparison |
-| `03b_train_ppo_smooth.py` | Train PPO with jerkiness penalty (reward shaping) |
-| `03c_train_ppo_sparse.py` | Train PPO with sparse binary reward |
-| `04_enjoy_reacher.py` | Watch any trained Reacher agent (edit model path inside) |
-| `05_fair_compare.py` | Evaluate all agents on the same reward for fair comparison |
-| `06_plot_curves.py` | Plot learning curves for all experiments |
-| `07_train_cheetah.py` | Train SAC on HalfCheetah-v5 (1M steps, ~1hr) |
-| `08_train_ant.py` | Train PPO on Ant-v5 (500k steps) |
-| `09_enjoy_progression.py` | Replay saved checkpoints to watch learning progression |
 
 ## Key Findings
 
-### SAC outperformed PPO on Reacher
+### 1. The performance ceiling was trivially reachable
 
-SAC learned faster and reached higher final reward on the same task, thanks to its replay buffer making better use of past experience. The code change was trivial — `PPO` → `SAC`.
+Every experiment found the same answer within 1–2 iterations: delegate to numpy's C-compiled sort. The ~3.5–4.1ms spread across "best" times is system noise, not algorithmic improvement. Sorting 100K integers is a solved problem — the LLM can't optimize past what numpy already provides.
 
-### Reward scale ≠ reward quality
+### 2. The real optimization happened at the prompt level
 
-The sparse-reward agent appeared to score highest on the learning curve plot (~0 vs. -5 for SAC) but behaved the worst. It was using a different reward scale (0 or 1) than the others (negative distance + control cost). Comparing reward numbers across different reward functions is meaningless — you have to watch the behavior or evaluate on a common metric.
+The inner loop (LLM improving its own code) showed minimal genuine improvement. The outer loop (human rewriting prompts based on failure analysis) drove all meaningful gains:
 
-### Reward shaping is the real problem
+- **v1 → v2**: Adding performance context ("pure-Python loops cost 5–80ms of interpreter overhead") eliminated pure-Python approaches entirely
+- **v2 → v3**: Adding error feedback prevented crash loops; anti-repetition instructions increased strategy diversity
 
-The smooth (jerkiness penalty) agent solved the same task but moved differently — trading some speed for grace. The sparse agent barely learned at all because it got no signal until accidentally touching the target. The algorithm is almost secondary to what you choose to reward.
+### 3. The automated meta-optimizer performed worse than the human
 
-### Agents exploit, not solve
+The meta-optimizer over-corrected in round 2 (pushing the inner loop toward "diverse strategies" which meant slow pure-Python sorts), lost hard-won guardrails (the numpy 2.x `copy=False` warning was dropped when prompts were rewritten), produced malformed JSON in round 4 (breaking its own evolution), and showed degrading success rates across rounds (8/8 → 6/8).
 
-The HalfCheetah discovered that running on its back was a perfectly valid high-reward strategy because the reward function (forward velocity - control cost) says nothing about orientation. Quantitative improvement (reward 1200 → 2000) happened without qualitative behavior change — it just got better at the same exploit. This is reward hacking, and it's one of the central unsolved problems in embodied AI.
+Human prompt engineering required understanding *why* something failed, not just *that* it failed. The meta-optimizer lacked this judgment.
 
-## Progression Replay
+### 4. Task selection matters more than loop architecture
 
-The most satisfying part of this project is watching agents improve over training. The checkpoint scripts save snapshots every 100k steps so you can replay them in order:
+Sorting was a poor choice for demonstrating self-improvement because the search space is narrow (one trick: use numpy), the ceiling is trivially reachable, improvements are not compositional, and the feedback signal is noisy. A good self-improvement task needs a wide search space, a clear gradient, compositional strategies, and an accessible-but-hard ceiling.
 
-```bash
-python 09_enjoy_progression.py ant       # watch ant go from wobbling to walking
-python 09_enjoy_progression.py cheetah   # watch cheetah get faster
+## Project Structure
+
+```
+ai-research-loop/
+├── self_improving_loop.py          # v1 — naive prompt
+├── self_improving_loop_v2.py       # v2 — smart context (used for v2 run)
+├── self_improving_loop_v3.py       # v3 — error feedback + anti-repetition
+├── meta_optimizer.py               # Automated outer loop
+├── migrate_v1_log.py               # Utility to archive v1 results
+├── optimization_log.json           # v1 raw results
+└── experiments/
+    ├── manifest.json               # Index of all experiments
+    ├── v1-baseline.json            # v1 full log
+    ├── v2-smart-prompts.json       # v2 full log
+    ├── v3-error-feedback.json      # v3 full log
+    ├── meta-round-01.json          # Meta-optimizer round logs
+    ├── meta-round-02.json
+    ├── meta-round-03.json
+    ├── meta-round-04.json
+    ├── meta-round-05.json
+    └── meta-optimizer-*.json       # Meta-optimizer summary log
 ```
 
-## What I'd Try Next
+## Running It
 
-- **Make sparse reward work** using Hindsight Experience Replay (HER) or curiosity-driven exploration
-- **Train Ant longer** (2M+ steps) to see a real gait emerge
-- **Try Humanoid-v5** — full bipedal walking, the hardest standard MuJoCo task
-- **Sim-to-real** — look into Isaac Gym for GPU-accelerated training and physical robot transfer
+```bash
+# Install dependencies
+pip install anthropic numpy
 
-## Dependencies
+# Set your API key
+export ANTHROPIC_API_KEY="sk-ant-..."
 
-- Python 3.9+
-- gymnasium[mujoco]
-- stable-baselines3
-- matplotlib
+# Run v3 (recommended starting point)
+python self_improving_loop_v3.py --experiment "my-experiment" --iterations 8
+
+# Run the meta-optimizer
+python meta_optimizer.py --rounds 5 --inner-iterations 8
+```
+
+Estimated API cost: ~$0.04 per 8-iteration experiment, ~$0.25 for a full meta-optimizer run.
+
+## What I'd Do Differently
+
+The sorting task was the wrong task for this architecture. A good self-improvement target needs:
+
+- **Wide search space** — many valid approaches, not one trick
+- **Continuous gradient** — small changes produce measurable improvement
+- **Compositional strategies** — multiple ideas that stack
+- **Hard but reachable ceiling** — start at 30%, climb to 80%
+- **Informative failures** — can see *which cases* failed and *why*
+- **Cheap evaluation** — runs in seconds, no GPU
+
+Better candidates: prompt optimization for a reasoning benchmark, game strategy (2048), mini-ARC solvers, or LLM self-calibration tasks.
+
+## Built With
+
+- **Claude Sonnet 4** (claude-sonnet-4-20250514) — both inner loop (code generation) and outer loop (meta-analysis)
+- **Python 3.11** on macOS ARM
+- **numpy 2.x** for benchmarking
+- Total cost across all experiments: ~$0.35
