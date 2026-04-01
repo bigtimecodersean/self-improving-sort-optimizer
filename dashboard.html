@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Self-Improving Sort Optimizer — Results Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #080b14; color: #e2e8f0; font-family: 'DM Sans', sans-serif; padding: 28px 32px; min-height: 100vh; }
+.mono { font-family: 'IBM Plex Mono', monospace; }
+h1 { font-size: 21px; font-weight: 700; letter-spacing: -0.5px; background: linear-gradient(135deg, #22d3ee, #a78bfa, #e879f9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 4px; }
+.subtitle { font-size: 12px; color: #475569; font-family: 'IBM Plex Mono', monospace; margin-bottom: 22px; }
+.pills { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+.pills-label { font-size: 10px; color: #64748b; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 1.2px; margin-right: 4px; }
+.pill { padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 10.5px; font-family: 'IBM Plex Mono', monospace; font-weight: 500; background: transparent; border: 1px solid rgba(148,163,184,0.12); color: #64748b; transition: all 0.15s; }
+.pill.active { background: var(--pill-bg); border-color: var(--pill-color); color: var(--pill-color); }
+.pill:hover { border-color: rgba(148,163,184,0.3); }
+.stats { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 20px 0; }
+.stat { background: rgba(148,163,184,0.04); border: 1px solid rgba(148,163,184,0.08); border-radius: 9px; padding: 12px 14px; }
+.stat-label { font-size: 9.5px; color: #64748b; text-transform: uppercase; letter-spacing: 1.1px; font-family: 'IBM Plex Mono', monospace; margin-bottom: 4px; }
+.stat-value { font-size: 20px; font-weight: 700; font-family: 'IBM Plex Mono', monospace; letter-spacing: -0.5px; }
+.stat-sub { font-size: 10.5px; color: #475569; margin-top: 2px; }
+.chart-box { background: rgba(148,163,184,0.03); border: 1px solid rgba(148,163,184,0.08); border-radius: 11px; padding: 16px 14px 8px; margin-bottom: 18px; }
+.chart-title { font-size: 10px; color: #64748b; margin-bottom: 10px; padding-left: 6px; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 1.2px; }
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.iter-row { display: grid; grid-template-columns: 28px 54px 1fr 52px; align-items: center; gap: 6px; padding: 7px 16px; transition: all 0.15s; }
+.iter-row.best { border-left: 2px solid var(--exp-color); background: rgba(255,255,255,0.02); }
+.iter-row:not(.best) { border-left: 2px solid transparent; }
+.findings { margin-top: 20px; padding: 16px 20px; border-radius: 10px; background: rgba(148,163,184,0.04); border: 1px solid rgba(148,163,184,0.08); }
+.findings p { font-size: 12.5px; color: #cbd5e1; line-height: 1.75; margin-bottom: 12px; }
+.findings p:last-child { margin-bottom: 0; }
+.findings strong { color: #22d3ee; }
+canvas { max-width: 100%; }
+</style>
+</head>
+<body>
+
+<h1>Self-Improving Sort Optimizer — Experiment Results</h1>
+<p class="subtitle">100,000 integers · claude-sonnet-4 · 3 manual rounds + 5 meta-optimizer rounds = 64 total iterations</p>
+
+<div style="margin-bottom: 20px;">
+  <div class="pills" id="manual-pills">
+    <span class="pills-label">Human-tuned</span>
+  </div>
+  <div class="pills" id="meta-pills">
+    <span class="pills-label">Meta-optimizer</span>
+  </div>
+</div>
+
+<div class="stats" id="stats-row"></div>
+
+<div class="chart-box">
+  <div class="chart-title">Best time per experiment</div>
+  <div style="position: relative; height: 180px;"><canvas id="barChart"></canvas></div>
+</div>
+
+<div class="detail-grid">
+  <div class="chart-box" style="margin-bottom: 0;">
+    <div class="chart-title" id="detail-title">Iterations</div>
+    <p id="detail-desc" style="font-size: 11px; color: #475569; margin: 0 0 10px 6px;"></p>
+    <div style="position: relative; height: 180px;"><canvas id="lineChart"></canvas></div>
+  </div>
+  <div class="chart-box" style="margin-bottom: 0; padding-bottom: 14px;">
+    <div class="chart-title" id="iter-log-title">Iteration log</div>
+    <div id="iter-table"></div>
+  </div>
+</div>
+
+<div class="findings">
+  <div style="font-size: 10px; color: #94a3b8; margin-bottom: 10px; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 1.2px;">Key findings</div>
+  <p><strong style="color: #22d3ee;">1. The ceiling was trivially reachable.</strong> All numpy approaches cluster at 3.5–4.1ms. The bottleneck is C-compiled numpy sort + list conversion — no Python trick can beat it.</p>
+  <p><strong style="color: #facc15;">2. Human prompt engineering beat the meta-optimizer.</strong> Hand-tuned v3 prompts produced the global best (3.54ms). The meta-optimizer regressed to 241ms in round 2 and spent 3 rounds recovering.</p>
+  <p><strong style="color: #f87171;">3. The meta-optimizer degraded over time.</strong> Success rate fell from 8/8 → 6/8 as rewritten prompts dropped guardrails. Its own JSON output broke in round 4.</p>
+  <p><strong style="color: #a78bfa;">4. Task selection matters most.</strong> Sorting was the wrong task — narrow search space, trivial ceiling, noisy gradient. A good self-improvement task needs compositional strategies and an accessible-but-hard ceiling.</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const EXPERIMENTS = [
+  { key:"v1", label:"v1 · Naive", color:"#f87171", best:3.952, success:"8/8", phase:"manual",
+    desc:"No system prompt. Only shows last attempt. No perf context.",
+    iters:[{i:1,ms:3.952,best:true,s:"numpy int32"},{i:2,ms:82.327,best:false,s:"radix sort"},{i:3,ms:54.078,best:false,s:"counting sort"},{i:4,ms:11.605,best:false,s:"counting sort (opt)"},{i:5,ms:16.207,best:false,s:"counting sort"},{i:6,ms:51.452,best:false,s:"radix sort"},{i:7,ms:11.59,best:false,s:"counting sort"},{i:8,ms:50.851,best:false,s:"radix sort"}]},
+  { key:"v2", label:"v2 · Smart Context", color:"#fb923c", best:3.754, success:"4/8", phase:"manual",
+    desc:"System prompt with perf context. Full scoreboard. No error feedback.",
+    iters:[{i:1,ms:4.063,best:false,s:"numpy int32"},{i:2,ms:4.135,best:false,s:"numpy in-place"},{i:3,ms:3.754,best:true,s:"numpy fromiter"},{i:4,ms:4.104,best:false,s:"numpy quicksort"},{i:5,ms:null,best:false,s:"ERROR: copy=False"},{i:6,ms:null,best:false,s:"ERROR: copy=False"},{i:7,ms:null,best:false,s:"ERROR: copy=False"},{i:8,ms:null,best:false,s:"ERROR: copy=False"}]},
+  { key:"v3", label:"v3 · Error Feedback", color:"#facc15", best:3.542, success:"8/8", phase:"manual",
+    desc:"Error feedback + numpy 2.x warning + anti-repetition.",
+    iters:[{i:1,ms:3.916,best:false,s:"numpy int32"},{i:2,ms:3.542,best:true,s:"numpy fromiter+inplace"},{i:3,ms:13.365,best:false,s:"array.array sorted()"},{i:4,ms:5.535,best:false,s:"numpy int64 heapsort"},{i:5,ms:13.618,best:false,s:"array.array sorted()"},{i:6,ms:5.42,best:false,s:"numpy int64 quicksort"},{i:7,ms:13.899,best:false,s:"array.array sorted()"},{i:8,ms:4.048,best:false,s:"numpy int32 quicksort"}]},
+  { key:"m1", label:"Meta R1", color:"#22d3ee", best:3.677, success:"8/8", phase:"meta",
+    desc:"Used v3 prompts as defaults.",
+    iters:[{i:1,ms:4.113,best:false,s:"numpy"},{i:2,ms:4.084,best:false,s:"numpy"},{i:3,ms:3.888,best:false,s:"numpy"},{i:4,ms:3.677,best:true,s:"numpy fromiter+inplace"},{i:5,ms:3.928,best:false,s:"numpy"},{i:6,ms:8.944,best:false,s:"custom"},{i:7,ms:4.744,best:false,s:"numpy"},{i:8,ms:6.799,best:false,s:"custom"}]},
+  { key:"m2", label:"Meta R2", color:"#a78bfa", best:11.457, success:"8/8", phase:"meta",
+    desc:"Outer loop pushed 'diverse strategies' → pure Python regression.",
+    iters:[{i:1,ms:51.082,best:false,s:"custom"},{i:2,ms:87.628,best:false,s:"custom"},{i:3,ms:241.419,best:false,s:"custom"},{i:4,ms:12.552,best:false,s:"counting"},{i:5,ms:135.45,best:false,s:"custom"},{i:6,ms:164.495,best:false,s:"custom"},{i:7,ms:11.751,best:false,s:"counting"},{i:8,ms:11.457,best:true,s:"counting"}]},
+  { key:"m3", label:"Meta R3", color:"#4ade80", best:3.887, success:"7/8", phase:"meta",
+    desc:"Recovered to numpy. One copy=False crash.",
+    iters:[{i:1,ms:3.887,best:true,s:"numpy"},{i:2,ms:6.798,best:false,s:"numpy"},{i:3,ms:4.024,best:false,s:"numpy"},{i:4,ms:5.241,best:false,s:"numpy"},{i:5,ms:5.959,best:false,s:"numpy"},{i:6,ms:null,best:false,s:"ERROR: copy=False"},{i:7,ms:6.096,best:false,s:"numpy"},{i:8,ms:13.339,best:false,s:"counting"}]},
+  { key:"m4", label:"Meta R4", color:"#818cf8", best:3.917, success:"7/8", phase:"meta",
+    desc:"Outer loop JSON broke. Prompts couldn't evolve.",
+    iters:[{i:1,ms:null,best:false,s:"ERROR: copy=False"},{i:2,ms:6.228,best:false,s:"numpy"},{i:3,ms:7.389,best:false,s:"numpy"},{i:4,ms:4.183,best:false,s:"numpy"},{i:5,ms:6.281,best:false,s:"numpy"},{i:6,ms:7.174,best:false,s:"numpy"},{i:7,ms:3.917,best:true,s:"numpy fromiter"},{i:8,ms:6.815,best:false,s:"numpy"}]},
+  { key:"m5", label:"Meta R5", color:"#e879f9", best:3.891, success:"6/8", phase:"meta",
+    desc:"Degrading: 6/8 success, copy=False errors increasing.",
+    iters:[{i:1,ms:null,best:false,s:"ERROR: copy=False"},{i:2,ms:6.208,best:false,s:"numpy"},{i:3,ms:3.943,best:false,s:"numpy"},{i:4,ms:4.237,best:false,s:"numpy"},{i:5,ms:8.18,best:false,s:"custom"},{i:6,ms:3.891,best:true,s:"numpy"},{i:7,ms:null,best:false,s:"ERROR: copy=False"},{i:8,ms:5.966,best:false,s:"numpy"}]},
+];
+
+let selected = "v3";
+let barChart, lineChart;
+
+function render() {
+  const exp = EXPERIMENTS.find(e => e.key === selected);
+
+  // Pills
+  ["manual","meta"].forEach(phase => {
+    const container = document.getElementById(phase === "manual" ? "manual-pills" : "meta-pills");
+    container.querySelectorAll(".pill").forEach(p => p.remove());
+    EXPERIMENTS.filter(e => e.phase === phase).forEach(e => {
+      const btn = document.createElement("button");
+      btn.className = "pill" + (selected === e.key ? " active" : "");
+      btn.textContent = e.label + " · " + e.best + "ms";
+      btn.style.setProperty("--pill-color", e.color);
+      btn.style.setProperty("--pill-bg", e.color + "20");
+      btn.onclick = () => { selected = e.key; render(); };
+      container.appendChild(btn);
+    });
+  });
+
+  // Stats
+  const globalBest = Math.min(...EXPERIMENTS.map(e => e.best));
+  const globalBestExp = EXPERIMENTS.find(e => e.best === globalBest);
+  const statsHTML = [
+    { l:"Global Best", v:globalBest+" ms", s:globalBestExp.label, c:globalBestExp.color },
+    { l:"Total Iterations", v:"64", s:"across 8 experiments", c:"#94a3b8" },
+    { l:"Total Errors", v:"10", s:"mostly copy=False", c:"#f87171" },
+    { l:"API Cost", v:"~$0.35", s:"estimated total", c:"#4ade80" },
+    { l:"Winner", v:"Human", s:"v3 prompts > meta-opt", c:"#facc15" },
+  ].map(c => `<div class="stat"><div class="stat-label">${c.l}</div><div class="stat-value" style="color:${c.c}">${c.v}</div><div class="stat-sub">${c.s}</div></div>`).join("");
+  document.getElementById("stats-row").innerHTML = statsHTML;
+
+  // Bar chart
+  if (barChart) barChart.destroy();
+  barChart = new Chart(document.getElementById("barChart"), {
+    type: "bar",
+    data: {
+      labels: EXPERIMENTS.map(e => e.label),
+      datasets: [{ data: EXPERIMENTS.map(e => e.best),
+        backgroundColor: EXPERIMENTS.map(e => selected === e.key ? e.color : e.color + "60"),
+        borderRadius: 4, borderSkipped: false }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(2) + " ms" } } },
+      scales: {
+        x: { ticks: { color: "#64748b", font: { size: 9, family: "'IBM Plex Mono'" } }, grid: { display: false } },
+        y: { ticks: { color: "#64748b", font: { size: 9, family: "'IBM Plex Mono'" }, callback: v => v + " ms" }, grid: { color: "rgba(148,163,184,0.06)" } }
+      },
+      onClick: (evt, els) => { if (els.length) { selected = EXPERIMENTS[els[0].index].key; render(); } }
+    }
+  });
+
+  // Line chart
+  const validIters = exp.iters.filter(it => it.ms !== null);
+  if (lineChart) lineChart.destroy();
+  document.getElementById("detail-title").textContent = exp.label + " — Iterations";
+  document.getElementById("detail-desc").textContent = exp.desc;
+  lineChart = new Chart(document.getElementById("lineChart"), {
+    type: "line",
+    data: {
+      labels: exp.iters.map(it => "#" + it.i),
+      datasets: [{ data: exp.iters.map(it => it.ms),
+        borderColor: exp.color, backgroundColor: exp.color + "20",
+        fill: true, tension: 0.3, pointRadius: exp.iters.map(it => it.best ? 6 : it.ms ? 3 : 0),
+        pointBackgroundColor: exp.iters.map(it => it.best ? exp.color : "#1e293b"),
+        pointBorderColor: exp.color, pointBorderWidth: 2, spanGaps: false }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.parsed.y ? ctx.parsed.y.toFixed(2) + " ms" : "ERROR" } } },
+      scales: {
+        x: { ticks: { color: "#64748b", font: { size: 9, family: "'IBM Plex Mono'" } }, grid: { color: "rgba(148,163,184,0.06)" } },
+        y: { ticks: { color: "#64748b", font: { size: 9, family: "'IBM Plex Mono'" }, callback: v => v + " ms" }, grid: { color: "rgba(148,163,184,0.06)" } }
+      }
+    }
+  });
+
+  // Iteration table
+  document.getElementById("iter-log-title").textContent = "Iteration log · " + exp.success + " succeeded";
+  document.getElementById("iter-table").innerHTML = exp.iters.map(it => {
+    const isErr = it.ms === null;
+    const cls = it.best ? ' class="iter-row best"' : ' class="iter-row"';
+    const style = it.best ? ` style="--exp-color:${exp.color}"` : "";
+    if (isErr) {
+      return `<div${cls}${style}><span class="mono" style="font-size:10.5px;color:#64748b">#${it.i}</span><span class="mono" style="font-size:10px;color:#ef4444;font-weight:600">ERR</span><span style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.s}</span><span></span></div>`;
+    }
+    const badge = it.best ? `<span class="mono" style="font-size:9px;color:${exp.color}">★ BEST</span>` : (it.ms > 5 ? `<span class="mono" style="font-size:9px;color:#334155">+${((it.ms-exp.best)/exp.best*100).toFixed(0)}%</span>` : "");
+    return `<div${cls}${style}><span class="mono" style="font-size:10.5px;color:#64748b">#${it.i}</span><span class="mono" style="font-size:12px;font-weight:600;color:${it.best?exp.color:'#94a3b8'}">${it.ms.toFixed(2)}</span><span style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.s}</span>${badge}</div>`;
+  }).join("");
+}
+
+render();
+</script>
+</body>
+</html>
