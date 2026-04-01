@@ -1,5 +1,7 @@
 # Self-Improving Sort Optimizer
 
+**[→ Interactive Results Dashboard](https://bigtimecodersean.github.io/self-improving-sort-optimizer/dashboard.html)**
+
 **Can an LLM optimize its own code through a benchmark feedback loop?**
 
 A toy automated AI research project that explores self-improving loops: an LLM writes a sorting function, we benchmark it, feed the result back, and ask for something faster. Across 8 experiments and 64 iterations, we tested whether this loop converges on better solutions — and whether an automated meta-optimizer can replace human prompt engineering.
