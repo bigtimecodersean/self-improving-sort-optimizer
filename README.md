@@ -4,11 +4,11 @@
 
 **Can an LLM optimize its own code through a benchmark feedback loop?**
 
-A toy automated AI research project that explores self-improving loops: an LLM writes a sorting function, we benchmark it, feed the result back, and ask for something faster. Across 8 experiments and 64 iterations, we tested whether this loop converges on better solutions — and whether an automated meta-optimizer can replace human prompt engineering.
+A toy automated AI research project that explores self-improving loops: an LLM writes a sorting function, we benchmark it, feed the result back, and ask for something faster. Across 8 experiments and 64 iterations, we tested whether this loop converges on better solutions — and whether an automated meta-optimizer can replace a human prompting.
 
 ## The Setup
 
-The inner loop is simple:
+The inner loop:
 
 1. Ask Claude (Sonnet 4) to write a Python `sort_list` function
 2. Dynamically load and benchmark it against 100,000 random integers
